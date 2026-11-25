@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Gourmet Map 単体テスト</title>
+
+    <style>
+      body {
+        max-width: 900px;
+
+        margin: 32px auto;
+
+        padding: 16px;
+
+        font-family: sans-serif;
+
+        line-height: 1.7;
+      }
+
+      .pass {
+        color: #166534;
+      }
+
+      .fail {
+        color: #b91c1c;
+      }
+
+      li {
+        padding: 8px;
+
+        border-bottom: 1px solid #ddd;
+      }
+    </style>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/search.js"></script>
+  </head>
+
+  <body>
+    <h1>グルメマップ 単体テスト</h1>
+
+    <p id="summary" role="status"></p>
+
+    <ol id="results"></ol>
+
+    <script>
+      "use strict";
+
+      const S = GourmetMap.Storage;
+      const Q = GourmetMap.Search;
+
+      let passed = 0;
+      let failed = 0;
+
+      function assertEqual(actual, expected) {
+        if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+          throw new Error(
+            `期待値：${JSON.stringify(expected)} ` +
+              `実際：${JSON.stringify(actual)}`,
+          );
+        }
+      }
+
+      function assertThrows(handler) {
+        let thrown = false;
+
+        try {
+          handler();
+        } catch {
+          thrown = true;
+        }
+
+        if (!thrown) {
+          throw new Error("例外が発生しませんでした。");
+        }
+      }
+
+      function test(name, handler) {
+        const row = document.createElement("li");
+
+        try {
+          handler();
+
+          passed++;
+
+          row.className = "pass";
+
+          row.textContent = "PASS： " + name;
+        } catch (error) {
+          failed++;
+
+          row.className = "fail";
+
+          row.textContent = "FAIL： " + name + " / " + error.message;
+        }
+
+        document.getElementById("results").append(row);
+      }
+
+      /* =================================
+           距離計算
+        ================================== */
+
+      test("同じ座標の距離は0m", () => {
+        assertEqual(Q.distance(35, 135, 35, 135), 0);
+      });
+
+      test("距離計算の精度", () => {
+        const value = Q.distance(35, 135, 35.01, 135);
+
+        assertEqual(Math.round(value), 1112);
+      });
+
+      test("無効な緯度を拒否", () => {
+        assertThrows(() => {
+          Q.distance(100, 135, 35, 135);
+        });
+      });
+
+      test("80mは徒歩1分", () => {
+        assertEqual(Q.walkingMinutes(80), 1);
+      });
+
+      test("81mは徒歩2分", () => {
+        assertEqual(Q.walkingMinutes(81), 2);
+      });
+
+      test("800mの表示", () => {
+        assertEqual(Q.formatDistance(800), "800m");
+      });
+
+      test("1500mの表示", () => {
+        assertEqual(Q.formatDistance(1500), "1.5km");
+      });
+
+      /* =================================
+           テスト用架空店舗
+        ================================== */
+
+      const shops = [
+        {
+          id: "J000000001",
+          name: "カフェ テスト",
+          nameKana: "かふぇ てすと",
+          genre: "カフェ",
+
+          distanceM: 300,
+
+          lunch: "あり",
+          parking: "なし",
+        },
+
+        {
+          id: "J000000002",
+          name: "和食 テスト",
+          nameKana: "わしょく てすと",
+          genre: "和食",
+
+          distanceM: 800,
+
+          lunch: "あり",
+          parking: "あり",
+        },
+
+        {
+          id: "J000000003",
+          name: "洋食 テスト",
+          nameKana: "ようしょく てすと",
+          genre: "洋食",
+
+          distanceM: 3001,
+
+          lunch: "未確認",
+          parking: "あり",
+        },
+      ];
+
+      /* =================================
+           検索機能
+        ================================== */
+
+      test("3kmを超える店舗を除外", () => {
+        assertEqual(Q.filter(shops, S.defaultFilters()).length, 2);
+      });
+
+      test("距離300mを含める", () => {
+        const filters = S.defaultFilters();
+
+        filters.radiusM = 300;
+
+        assertEqual(Q.filter(shops, filters).length, 1);
+      });
+
+      test("3000mの境界値", () => {
+        const filters = S.defaultFilters();
+
+        assertEqual(
+          Q.filter([{ ...shops[0], distanceM: 3000 }], filters).length,
+          1,
+        );
+      });
+
+      test("ジャンルOR検索", () => {
+        const filters = S.defaultFilters();
+
+        filters.genreNames = ["カフェ", "和食"];
+
+        assertEqual(Q.filter(shops, filters).length, 2);
+      });
+
+      test("ジャンル未選択は0件", () => {
+        const filters = S.defaultFilters();
+
+        filters.genreNames = [];
+
+        assertEqual(Q.filter(shops, filters).length, 0);
+      });
+
+      test("詳細条件AND検索", () => {
+        const filters = S.defaultFilters();
+
+        filters.conditions = ["lunch", "parking"];
+
+        assertEqual(
+          Q.filter(shops, filters).map((shop) => shop.id),
+
+          ["J000000002"],
+        );
+      });
+
+      test("ひらがなによる店名検索", () => {
+        const filters = S.defaultFilters();
+
+        filters.keyword = "かふぇ";
+
+        assertEqual(Q.filter(shops, filters).length, 1);
+      });
+
+      test("全角英数字の正規化", () => {
+        assertEqual(Q.normalize("ＡＢＣ１２３"), "abc123");
+      });
+
+      test("距離が遠い順", () => {
+        const filters = S.defaultFilters();
+
+        filters.sort = "distanceDesc";
+
+        assertEqual(Q.filter(shops, filters)[0].id, "J000000002");
+      });
+
+      test("店名昇順", () => {
+        const filters = S.defaultFilters();
+
+        filters.sort = "nameAsc";
+
+        assertEqual(Q.filter(shops, filters)[0].id, "J000000001");
+      });
+
+      test("店名降順", () => {
+        const filters = S.defaultFilters();
+
+        filters.sort = "nameDesc";
+
+        assertEqual(Q.filter(shops, filters)[0].id, "J000000002");
+      });
+
+      test("お気に入り絞り込み", () => {
+        const filters = S.defaultFilters();
+
+        filters.favoriteOnly = true;
+
+        assertEqual(Q.filter(shops, filters, ["J000000001"]).length, 1);
+      });
+
+      test("設備情報ありの判定", () => {
+        assertEqual(Q.classify("あり", "parking"), "yes");
+      });
+
+      test("設備情報なしの判定", () => {
+        assertEqual(Q.classify("なし", "parking"), "no");
+      });
+
+      test("不明情報を肯定扱いしない", () => {
+        assertEqual(Q.classify("未確認", "wifi"), "unknown");
+      });
+
+      /* =================================
+           データ検証
+        ================================== */
+
+      test("初期データが正常", () => {
+        assertEqual(S.validateData(S.defaultData()).schemaVersion, 1);
+      });
+
+      test("不正なスキーマを拒否", () => {
+        const data = S.defaultData();
+
+        data.schemaVersion = 999;
+
+        assertThrows(() => {
+          S.validateData(data);
+        });
+      });
+
+      test("不正なテーマ設定を拒否", () => {
+        const data = S.defaultData();
+
+        data.appSettings.theme = "invalid";
+
+        assertThrows(() => {
+          S.validateData(data);
+        });
+      });
+
+      test("不正な更新間隔を拒否", () => {
+        const data = S.defaultData();
+
+        data.appSettings.interval = -1;
+
+        assertThrows(() => {
+          S.validateData(data);
+        });
+      });
+
+      test("不明な追加項目を除外する", () => {
+        const data = S.defaultData();
+
+        data.apiKey = "dummy";
+
+        assertEqual(Object.hasOwn(S.validateData(data), "apiKey"), false);
+      });
+
+      test("存在しない地点への参照を拒否", () => {
+        const data = S.defaultData();
+
+        data.appSettings.activeLocationId = "invalid-location";
+
+        assertThrows(() => {
+          S.validateData(data);
+        });
+      });
+
+      /* =================================
+           テスト結果
+        ================================== */
+
+      const total = passed + failed;
+
+      const percentage = total ? ((passed / total) * 100).toFixed(1) : "0";
+
+      const summary = document.getElementById("summary");
+
+      summary.textContent =
+        `成功：${passed}件 / ` +
+        `失敗：${failed}件 / ` +
+        `成功率：${percentage}%`;
+
+      summary.className = failed === 0 ? "pass" : "fail";
+    </script>
+  </body>
+</html>

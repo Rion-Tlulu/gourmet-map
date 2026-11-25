@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="ja" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <meta
+      name="description"
+      content="登録地点から半径3km以内のお店を探せるグルメマップ。"
+    />
+
+    <meta name="theme-color" content="#c2410c" />
+
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+            default-src 'self';
+            script-src 'self' https://cdn.jsdelivr.net;
+            style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+            img-src 'self' data: https://tile.openstreetmap.org https://*.hotpepper.jp https://*.hotp.jp https://cdn.jsdelivr.net;
+            connect-src 'self' https://script.google.com https://script.googleusercontent.com;
+            object-src 'none';
+            base-uri 'self';
+            form-action 'self';
+          "
+    />
+
+    <title>グルメマップ | Gourmet Map</title>
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- MarkerCluster -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/style.css" />
+
+    <link rel="stylesheet" href="./css/accessibility.css" />
+
+    <!-- 外部ライブラリ -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
+
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+    ></script>
+
+    <!-- アプリ -->
+    <script defer src="./js/config.js"></script>
+    <script defer src="./js/storage.js"></script>
+    <script defer src="./js/api.js"></script>
+    <script defer src="./js/search.js"></script>
+    <script defer src="./js/map.js"></script>
+    <script defer src="./js/app.js"></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main-content"> メインコンテンツへ移動 </a>
+
+    <!-- ヘッダー -->
+
+    <header class="app-header">
+      <div class="header-inner">
+        <a class="brand" href="#home">
+          <span class="brand-icon" aria-hidden="true">🍴</span>
+
+          <span>
+            グルメマップ
+            <small>Gourmet Map</small>
+          </span>
+        </a>
+
+        <div class="header-actions">
+          <button
+            type="button"
+            class="icon-button"
+            data-page="favorites"
+            aria-label="お気に入り"
+          >
+            ♡
+          </button>
+
+          <button
+            type="button"
+            class="icon-button"
+            data-page="settings"
+            aria-label="設定"
+          >
+            ⚙
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <!-- 共通メッセージ -->
+
+      <div
+        id="app-status"
+        class="status-message"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
+
+      <div id="app-error" class="error-message" role="alert" hidden></div>
+
+      <!-- =================================
+             01. ホーム
+        ================================== -->
+
+      <section id="page-home" class="page">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">あなたの近くに、おいしい発見。</p>
+
+            <h1>
+              いつもの場所の<br />
+              おいしいお店を<br />
+              見つけよう
+            </h1>
+
+            <p>登録した場所から半径3km以内の お店を探してみましょう。</p>
+          </div>
+
+          <div class="hero-art" aria-hidden="true">🏡</div>
+        </div>
+
+        <form id="search-form" class="panel">
+          <label for="location-select"> 探す場所を選ぶ </label>
+
+          <select id="location-select"></select>
+
+          <button type="button" class="secondary-button" data-page="locations">
+            登録地点の管理
+          </button>
+
+          <label for="keyword"> 店名・キーワード </label>
+
+          <input
+            type="search"
+            id="keyword"
+            maxlength="150"
+            placeholder="例：カフェ、ランチ"
+          />
+
+          <fieldset class="quick-filter">
+            <legend>よく使う検索条件</legend>
+
+            <label>
+              <input type="checkbox" name="quick-condition" value="lunch" />
+
+              <span aria-hidden="true">🍴</span>
+
+              ランチ
+            </label>
+
+            <label>
+              <input type="checkbox" name="quick-condition" value="parking" />
+
+              <span aria-hidden="true">P</span>
+
+              駐車場
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                name="quick-condition"
+                value="barrierFree"
+              />
+
+              <span aria-hidden="true">♿</span>
+
+              バリアフリー
+            </label>
+          </fieldset>
+
+          <button type="submit" class="primary-button">
+            お店を探す（半径3km）
+          </button>
+        </form>
+      </section>
+
+      <!-- =================================
+             02. 検索結果
+        ================================== -->
+
+      <section id="page-results" class="page" hidden>
+        <div class="page-heading">
+          <h1>検索結果</h1>
+
+          <button type="button" id="refresh-results" class="secondary-button">
+            更新
+          </button>
+        </div>
+
+        <div class="panel compact">
+          <strong id="result-location"> 登録地点 </strong>
+
+          <span id="last-updated"> 最終更新：未取得 </span>
+
+          <div class="view-switch" aria-label="表示形式">
+            <button type="button" id="show-list" aria-pressed="true">
+              リスト
+            </button>
+
+            <button type="button" id="show-map" aria-pressed="false">
+              地図
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" id="open-filter" class="secondary-button">
+            詳細フィルター
+          </button>
+
+          <button type="button" id="quick-save-preset" class="secondary-button">
+            条件を保存
+          </button>
+
+          <label for="sort">並び替え</label>
+
+          <select id="sort">
+            <option value="distanceAsc">距離が近い順</option>
+
+            <option value="distanceDesc">距離が遠い順</option>
+
+            <option value="nameAsc">店名昇順</option>
+
+            <option value="nameDesc">店名降順</option>
+          </select>
+        </div>
+
+        <p id="result-count" role="status" aria-live="polite"></p>
+
+        <p id="acquisition-status"></p>
+
+        <div class="results-layout">
+          <div id="list-panel">
+            <div id="restaurant-list" class="restaurant-list"></div>
+
+            <button
+              type="button"
+              id="load-more"
+              class="secondary-button full-width"
+              hidden
+            >
+              もっと見る
+            </button>
+          </div>
+
+          <div id="map-panel" hidden>
+            <div id="restaurant-map" class="map" aria-label="店舗地図"></div>
+
+            <p class="muted">地図上の円は直線距離の検索範囲です。</p>
+
+            <a
+              href="https://www.openstreetmap.org/fixthemap"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              地図の問題を報告
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================
+             03. お気に入り
+        ================================== -->
+
+      <section id="page-favorites" class="page" hidden>
+        <div class="page-heading">
+          <h1>お気に入り</h1>
+
+          <button type="button" id="refresh-favorites">更新</button>
+        </div>
+
+        <p id="favorite-status" role="status"></p>
+
+        <div id="favorite-list" class="restaurant-list"></div>
+      </section>
+
+      <!-- =================================
+             04. 登録地点管理
+        ================================== -->
+
+      <section id="page-locations" class="page" hidden>
+        <h1>登録地点の管理</h1>
+
+        <div id="location-list" class="management-list"></div>
+
+        <button type="button" id="add-location" class="primary-button">
+          ＋ 新しい地点を登録
+        </button>
+      </section>
+
+      <!-- =================================
+             05. プリセット管理
+        ================================== -->
+
+      <section id="page-presets" class="page" hidden>
+        <h1>検索条件のプリセット</h1>
+
+        <p>選択中の地点に保存した検索条件を管理できます。</p>
+
+        <div id="preset-list" class="management-list"></div>
+
+        <button type="button" id="add-preset" class="primary-button">
+          ＋ 現在の検索条件を登録
+        </button>
+      </section>
+
+      <!-- =================================
+             06. 設定
+        ================================== -->
+
+      <section id="page-settings" class="page" hidden>
+        <h1>設定</h1>
+
+        <form id="settings-form">
+          <div class="panel">
+            <h2>表示・アクセシビリティ</h2>
+
+            <label for="theme">テーマ</label>
+
+            <select id="theme">
+              <option value="system">システムに合わせる</option>
+              <option value="light">ライト</option>
+              <option value="dark">ダーク</option>
+            </select>
+
+            <label for="font-size">文字サイズ</label>
+
+            <select id="font-size">
+              <option value="normal">標準</option>
+              <option value="large">大</option>
+              <option value="extra-large">特大</option>
+            </select>
+
+            <label class="check-row">
+              <input type="checkbox" id="high-contrast" />
+              ハイコントラスト
+            </label>
+
+            <label class="check-row">
+              <input type="checkbox" id="reduce-motion" />
+              アニメーションの低減
+            </label>
+
+            <button type="button" id="reset-appearance">
+              表示設定を初期化
+            </button>
+          </div>
+
+          <div class="panel">
+            <h2>自動更新設定</h2>
+
+            <label class="check-row">
+              <input type="checkbox" id="auto-refresh" />
+
+              自動更新を有効にする
+            </label>
+
+            <label for="refresh-interval"> 更新間隔 </label>
+
+            <select id="refresh-interval">
+              <option value="5">5分</option>
+              <option value="15">15分</option>
+              <option value="30">30分</option>
+              <option value="60">1時間</option>
+              <option value="180">3時間</option>
+              <option value="360">6時間</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="panel">
+          <h2>地点・検索条件</h2>
+
+          <button type="button" data-page="locations">登録地点の管理</button>
+
+          <button type="button" data-page="presets">
+            検索条件のプリセット
+          </button>
+        </div>
+
+        <div class="panel">
+          <h2>データ管理</h2>
+
+          <p id="storage-size"></p>
+
+          <button type="button" id="export-backup">バックアップを作成</button>
+
+          <label for="backup-file"> バックアップファイル </label>
+
+          <input type="file" id="backup-file" accept=".json,application/json" />
+
+          <label for="import-mode">復元方法</label>
+
+          <select id="import-mode">
+            <option value="merge">追加（既存データを優先）</option>
+
+            <option value="replace">全データを上書き</option>
+          </select>
+
+          <button type="button" id="import-backup">バックアップを復元</button>
+
+          <button type="button" class="danger-button" id="clear-data">
+            すべての利用者データを削除
+          </button>
+        </div>
+
+        <div class="panel">
+          <h2>お知らせ・システムステータス</h2>
+
+          <p id="system-status">未確認</p>
+
+          <p id="system-notice"></p>
+
+          <button type="button" id="check-status">最新の状態を確認</button>
+        </div>
+
+        <div class="panel">
+          <h2>このアプリについて</h2>
+
+          <p id="app-version"></p>
+
+          <details>
+            <summary>ヘルプ・FAQ</summary>
+
+            <h3>検索結果に表示されない店舗がある</h3>
+
+            <p>
+              ホットペッパーグルメAPIで取得可能な
+              店舗のみを検索対象としています。
+            </p>
+
+            <h3>徒歩時間について</h3>
+
+            <p>
+              直線距離を80m/分で計算した目安です。
+              実際の経路や信号などは考慮していません。
+            </p>
+          </details>
+
+          <details id="terms">
+            <summary>利用規約（公開前の案）</summary>
+
+            <p>本アプリは店舗検索を補助する 非商用のポートフォリオです。</p>
+
+            <p>
+              店舗情報の正確性、営業時間、 定休日、予算、サービスの継続性は
+              保証されません。 最新情報は店舗公式ページなどで ご確認ください。
+            </p>
+          </details>
+
+          <details id="privacy">
+            <summary>プライバシーポリシー（公開前の案）</summary>
+
+            <p>登録地点、設定、検索条件は 利用者のブラウザ内に保存されます。</p>
+
+            <p>
+              店舗検索時には地点の座標を、 住所検索時には入力した住所や駅名を、
+              GASを経由して外部APIに送信します。 地図表示時には地図提供元への
+              通信が発生します。
+            </p>
+
+            <p>
+              LocalStorageは暗号化された保管庫では
+              ありません。共有端末での利用時は 保存内容にご注意ください。
+            </p>
+          </details>
+
+          <details>
+            <summary>外部サービス・ライセンス</summary>
+
+            <p>
+              <a href="https://webservice.recruit.co.jp/">
+                ホットペッパーグルメ Webサービス
+              </a>
+            </p>
+
+            <p>
+              <a href="https://www.geoapify.com/"> Geoapify </a>
+            </p>
+
+            <p>
+              <a href="https://leafletjs.com/"> Leaflet（BSD-2-Clause） </a>
+            </p>
+
+            <p>
+              <a href="https://github.com/Leaflet/Leaflet.markercluster">
+                Leaflet.markercluster（MIT）
+              </a>
+            </p>
+
+            <p>
+              <a href="https://www.openstreetmap.org/copyright">
+                OpenStreetMap contributors
+              </a>
+            </p>
+          </details>
+
+          <details>
+            <summary>問い合わせ・不具合報告</summary>
+
+            <p>
+              公開時に開発者の問い合わせ窓口を ここに掲載します。
+              個人の住所やAPIキーを報告内容に 含めないでください。
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <!-- =====================================
+         店舗詳細モーダル
+    ====================================== -->
+
+    <dialog id="shop-dialog" aria-labelledby="shop-title">
+      <div class="dialog-heading">
+        <h2 id="shop-title" tabindex="-1"></h2>
+
+        <form method="dialog">
+          <button aria-label="店舗詳細を閉じる">閉じる</button>
+        </form>
+      </div>
+
+      <div id="shop-image"></div>
+
+      <dl id="shop-details" class="shop-details"></dl>
+
+      <div id="shop-actions" class="dialog-actions"></div>
+
+      <p id="shop-message" role="status"></p>
+    </dialog>
+
+    <!-- =====================================
+         詳細フィルター
+    ====================================== -->
+
+    <dialog id="filter-dialog" aria-labelledby="filter-title">
+      <div class="dialog-heading">
+        <h2 id="filter-title">詳細な条件で絞り込む</h2>
+
+        <form method="dialog">
+          <button>閉じる</button>
+        </form>
+      </div>
+
+      <form id="filter-form">
+        <label for="filter-keyword"> 店名・キーワード </label>
+
+        <input type="search" id="filter-keyword" maxlength="150" />
+
+        <label for="radius">距離</label>
+
+        <select id="radius">
+          <option value="300">300m以内</option>
+          <option value="500">500m以内</option>
+          <option value="1000">1km以内</option>
+          <option value="1500">1.5km以内</option>
+          <option value="2000">2km以内</option>
+          <option value="2500">2.5km以内</option>
+          <option value="3000">3km以内</option>
+        </select>
+
+        <fieldset>
+          <legend>ジャンル（複数選択）</legend>
+
+          <button type="button" id="select-all-genres">すべて選択</button>
+
+          <button type="button" id="clear-genres">すべて解除</button>
+
+          <div id="genre-options" class="checkbox-grid"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>設備・サービス</legend>
+
+          <div id="condition-options" class="checkbox-grid"></div>
+        </fieldset>
+
+        <label class="check-row">
+          <input type="checkbox" id="favorite-only" />
+
+          お気に入りのみ表示
+        </label>
+
+        <button type="submit" class="primary-button">この条件で検索</button>
+
+        <button type="button" id="reset-filters">条件をクリア</button>
+      </form>
+    </dialog>
+
+    <!-- =====================================
+         地点登録・編集
+    ====================================== -->
+
+    <dialog id="location-dialog" aria-labelledby="location-title">
+      <div class="dialog-heading">
+        <h2 id="location-title">地点の登録</h2>
+
+        <form method="dialog">
+          <button>閉じる</button>
+        </form>
+      </div>
+
+      <div class="panel compact">
+        <label for="address-query">住所・駅名</label>
+
+        <input
+          type="search"
+          id="address-query"
+          maxlength="150"
+          placeholder="例：東京駅"
+        />
+
+        <button type="button" id="search-address">地点候補を検索</button>
+
+        <div id="location-candidates"></div>
+
+        <p class="muted">
+          Powered by
+          <a href="https://www.geoapify.com/"> Geoapify </a>
+        </p>
+
+        <button type="button" id="use-gps">現在地を取得</button>
+
+        <button type="button" id="use-location-map">地図から選択</button>
+
+        <div
+          id="location-map"
+          class="map"
+          aria-label="地点選択地図"
+          hidden
+        ></div>
+      </div>
+
+      <form id="location-form">
+        <label for="location-name">地点名</label>
+
+        <input id="location-name" maxlength="80" required />
+
+        <label for="latitude">緯度</label>
+
+        <input
+          type="number"
+          id="latitude"
+          min="20"
+          max="46"
+          step="any"
+          required
+        />
+
+        <label for="longitude">経度</label>
+
+        <input
+          type="number"
+          id="longitude"
+          min="122"
+          max="154"
+          step="any"
+          required
+        />
+
+        <p id="location-address"></p>
+
+        <p id="location-message" role="status"></p>
+
+        <button type="submit" class="primary-button">地点を保存する</button>
+      </form>
+    </dialog>
+
+    <!-- =====================================
+         初回利用案内
+    ====================================== -->
+
+    <dialog id="consent-dialog" aria-labelledby="consent-title">
+      <div class="welcome-icon" aria-hidden="true">🍴</div>
+
+      <h2 id="consent-title">グルメマップへようこそ！</h2>
+
+      <p>いつもの場所から半径3km以内の おいしいお店を見つけましょう。</p>
+
+      <p>
+        登録地点や検索条件は端末内に保存されます。 検索時には座標や住所・駅名が
+        外部サービスに送信されます。
+      </p>
+
+      <button type="button" id="read-legal">
+        利用規約・プライバシーポリシーを確認
+      </button>
+
+      <label class="check-row">
+        <input type="checkbox" id="consent-checkbox" />
+
+        利用規約に同意し、 プライバシーポリシーを確認しました
+      </label>
+
+      <button type="button" id="accept-consent" class="primary-button" disabled>
+        利用を開始する
+      </button>
+    </dialog>
+
+    <!-- フッター -->
+
+    <footer>
+      <p>
+        <a
+          href="https://webservice.recruit.co.jp/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Powered by ホットペッパーグルメ Webサービス
+        </a>
+      </p>
+
+      <p>店舗情報・営業時間は提供元の掲載内容です。</p>
+
+      <small> Gourmet Map </small>
+    </footer>
+
+    <!-- ボトムナビゲーション -->
+
+    <nav class="bottom-nav" aria-label="メインナビゲーション">
+      <button type="button" data-page="home">
+        <span aria-hidden="true">⌂</span>
+        ホーム
+      </button>
+
+      <button type="button" data-page="results">
+        <span aria-hidden="true">☷</span>
+        リスト
+      </button>
+
+      <button type="button" data-page="map">
+        <span aria-hidden="true">♧</span>
+        地図
+      </button>
+
+      <button type="button" data-page="favorites">
+        <span aria-hidden="true">♡</span>
+        お気に入り
+      </button>
+
+      <button type="button" data-page="settings">
+        <span aria-hidden="true">⚙</span>
+        設定
+      </button>
+    </nav>
+
+    <noscript>
+      このアプリを利用するには JavaScriptを有効にしてください。
+    </noscript>
+  </body>
+</html>

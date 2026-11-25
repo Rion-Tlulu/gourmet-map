@@ -1,0 +1,20 @@
+# 機密情報
+.env
+.env.*
+credentials.json
+secrets.json
+.clasprc.json
+.clasp.json
+
+# ログ
+*.log
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# エディター
+.vscode/
+
+# 個人データのバックアップ
+gourmet-map-backup*.json
