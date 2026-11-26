@@ -1033,18 +1033,39 @@
     color: var(--gm-icon-green);
   }
 
-  .gm-detail-dl {
-    @apply tw-m-0 tw-grid tw-gap-x-3 tw-gap-y-2 tw-text-sm;
-    grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  /* 店舗詳細の表（分類見出し＋行見出し） */
+  .gm-detail-table {
+    @apply tw-w-full tw-overflow-hidden tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-text-sm;
+    border-collapse: separate;
+    border-spacing: 0;
   }
 
-  .gm-detail-dl dt {
-    @apply tw-font-bold tw-text-muted;
+  .gm-detail-table th,
+  .gm-detail-table td {
+    @apply tw-border-0 tw-border-t tw-border-solid tw-border-line tw-px-3 tw-py-2.5 tw-text-left tw-align-top;
   }
 
-  .gm-detail-dl dd {
-    @apply tw-m-0 tw-min-w-0;
+  .gm-detail-table tbody:first-child tr:first-child th {
+    border-top-width: 0;
+  }
+
+  .gm-detail-table th[scope="row"] {
+    @apply tw-w-[8.5rem] tw-bg-surface-2 tw-font-bold tw-text-muted;
+  }
+
+  .gm-detail-table td {
+    @apply tw-min-w-0;
     white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  .gm-detail-group th {
+    @apply tw-text-xs tw-font-extrabold tw-tracking-wider tw-text-accent-ink;
+    background: var(--gm-grad-soft);
+  }
+
+  .gm-detail-empty {
+    @apply tw-text-muted;
   }
 
   .gm-shop-actions {
@@ -2216,14 +2237,16 @@ html[data-reduce-motion="true"] .gm-spinner {
     aspect-ratio: 16 / 9;
   }
 
-  .gm-detail-dl,
   .gm-kv {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .gm-detail-dl dd,
   .gm-kv dd {
     margin-bottom: 0.5rem;
+  }
+
+  .gm-detail-table th[scope="row"] {
+    width: 6.5rem;
   }
 
   .gm-quick-item {

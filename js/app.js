@@ -1761,21 +1761,6 @@
       return;
     }
 
-    // 正常な100件上限：エラーとせず検索範囲の制約を案内（API-01／ERR_PARTIAL）
-    if (state.result.complete && state.result.limited && !state.loading) {
-      container.append(
-        el(
-          "div",
-          { className: "gm-alert gm-alert-info gm-alert-compact", attrs: { role: "status" } },
-          icon("circle-info"),
-          el("p", {
-            className: "tw-m-0 tw-text-sm",
-            text: `周辺の${state.result.total}件のうち、登録地点から近い順に${C.MAX_SHOPS}件を取得しました。絞り込み・並び替えはこの${C.MAX_SHOPS}件の中で行い、${C.MAX_SHOPS + 1}件目以降のお店は表示されません。`,
-          }),
-        ),
-      );
-    }
-
     // 部分取得（ERR_PARTIAL：完了扱いにしない）
     if (!state.result.complete && !state.loading) {
       container.append(
@@ -2332,38 +2317,77 @@
 
     $("shop-features").hidden = !features.length;
 
-    const details = [
-      ["最寄り駅", shop.stationName],
-      ["アクセス", shop.access],
-      ["ランチ", shop.lunch],
-      ["23時以降の営業", shop.midnight],
-      ["カード", shop.card],
-      ["予算メモ", shop.budgetMemo],
-      ["駐車場", shop.parking],
-      ["禁煙・喫煙", shop.nonSmoking],
-      ["バリアフリー", shop.barrierFree],
-      ["総席数", shop.capacity],
-      ["宴会最大人数", shop.partyCapacity],
-      ["個室", shop.privateRoom],
-      ["座敷", shop.tatami],
-      ["掘りごたつ", shop.horigotatsu],
-      ["貸切", shop.charter],
-      ["Wi-Fi", shop.wifi],
-      ["お子様連れ", shop.child],
-      ["飲み放題（掲載情報）", shop.freeDrink],
-      ["食べ放題", shop.freeFood],
-      ["コース", shop.course],
-      ["英語メニュー", shop.english],
-      ["ペット同伴", shop.pet],
-      ["その他設備", shop.otherMemo],
-      ["備考", shop.shopDetailMemo],
+    // 店舗情報を分類ごとの表で表示（行見出し th・分類見出しは rowgroup）
+    const detailGroups = [
+      [
+        "アクセス",
+        [
+          ["最寄り駅", shop.stationName],
+          ["アクセス", shop.access],
+          ["駐車場", shop.parking],
+        ],
+      ],
+      [
+        "営業・お支払い",
+        [
+          ["ランチ", shop.lunch],
+          ["23時以降の営業", shop.midnight],
+          ["カード", shop.card],
+          ["予算メモ", shop.budgetMemo],
+        ],
+      ],
+      [
+        "席・設備",
+        [
+          ["総席数", shop.capacity],
+          ["宴会最大人数", shop.partyCapacity],
+          ["個室", shop.privateRoom],
+          ["座敷", shop.tatami],
+          ["掘りごたつ", shop.horigotatsu],
+          ["貸切", shop.charter],
+          ["禁煙・喫煙", shop.nonSmoking],
+          ["バリアフリー", shop.barrierFree],
+          ["Wi-Fi", shop.wifi],
+        ],
+      ],
+      [
+        "サービス",
+        [
+          ["お子様連れ", shop.child],
+          ["飲み放題（掲載情報）", shop.freeDrink],
+          ["食べ放題", shop.freeFood],
+          ["コース", shop.course],
+          ["英語メニュー", shop.english],
+          ["ペット同伴", shop.pet],
+        ],
+      ],
+      [
+        "その他",
+        [
+          ["その他設備", shop.otherMemo],
+          ["備考", shop.shopDetailMemo],
+        ],
+      ],
     ];
 
     $("shop-details").replaceChildren(
-      ...details.flatMap(([label, value]) => [
-        el("dt", { text: label }),
-        el("dd", { text: String(value ?? "").trim() || "情報なし" }),
-      ]),
+      ...detailGroups.map(([group, rows]) =>
+        el(
+          "tbody",
+          {},
+          el("tr", { className: "gm-detail-group" }, el("th", { attrs: { colspan: "2", scope: "rowgroup" }, text: group })),
+          ...rows.map(([label, value]) => {
+            const text = String(value ?? "").trim();
+
+            return el(
+              "tr",
+              {},
+              el("th", { attrs: { scope: "row" }, text: label }),
+              el("td", { className: text ? "" : "gm-detail-empty", text: text || "情報なし" }),
+            );
+          }),
+        ),
+      ),
     );
 
     $("shop-fetched").textContent = state.result?.fetchedAt
