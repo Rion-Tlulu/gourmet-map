@@ -416,9 +416,10 @@
       }
 
       image.removeEventListener("error", next);
-      image.src = "./assets/images/no-image.svg";
+      image.src = "./assets/images/no-image-shop.png";
+      wrapper.classList.add("is-placeholder");
 
-      if (variant !== "card") image.alt = "店舗画像なし";
+      if (variant !== "card") image.alt = "店舗画像はありません";
 
       credit.hidden = true;
     }

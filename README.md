@@ -40,22 +40,21 @@
 ### ディレクトリ
 
 ```
-index.html            画面（SCR-01〜28 をページ・モーダルで実装）
-css/tailwind.css      Tailwind の生成物（編集しない）
-css/style.css         デザイントークン・Bootstrap／Leaflet の調整
-css/accessibility.css フォーカス・文字サイズ・ハイコントラスト・動きの低減
-tailwind/input.css    Tailwind の入力（画面部品の定義）
-tailwind.config.js    Tailwind の設定（接頭辞 tw-、Preflight 無効）
-js/boot.js            表示設定の先行適用（CSP対応のため外部ファイル）
-js/config.js          設定値
-js/storage.js         LocalStorage（検証・移行・バックアップ）
-js/api.js             GAS通信（タイムアウト・再試行）
-js/search.js          距離計算・取得・絞り込み・並び替え
-js/map.js             地図
-js/ui.js              Bootstrap コンポーネントの操作・通知
-js/app.js             画面制御
-gas/                  サーバー側（GAS）
-test/                 自動テスト（Node.js 標準のテストランナー）
+index.html                    画面（SCR-01〜28 をページ・モーダルで実装）
+css/app.css                   生成されたCSS（編集しない）
+tailwind/input.css            CSSの元（画面部品・デザイントークン・Bootstrap/Leaflet調整・アクセシビリティ）
+tailwind/tailwind.config.js   Tailwind の設定（接頭辞 tw-、Preflight 無効）
+assets/images/                ファビコン・ホーム画像・店舗画像なし時の代替画像
+js/boot.js                    表示設定の先行適用（CSP対応のため外部ファイル）
+js/config.js                  設定値
+js/storage.js                 LocalStorage（検証・移行・バックアップ）
+js/api.js                     GAS通信（タイムアウト・再試行）
+js/search.js                  距離計算・取得・絞り込み・並び替え
+js/map.js                     地図
+js/ui.js                      Bootstrap コンポーネントの操作・通知
+js/app.js                     画面制御
+gas/                          サーバー側（GAS）
+test/                         自動テスト（Node.js 標準のテストランナー）
 ```
 
 ## 3. 開発手順
@@ -69,13 +68,13 @@ npm は使用しません（package.json・node_modules なし）。テストは
 
 ```bash
 # Windows（PowerShell）
-./tools/tailwindcss-windows-x64.exe -c tailwind.config.js -i tailwind/input.css -o css/tailwind.css --minify
+./tools/tailwindcss-windows-x64.exe -c tailwind/tailwind.config.js -i tailwind/input.css -o css/app.css --minify
 
 # macOS（Apple Silicon）
-./tools/tailwindcss-macos-arm64 -c tailwind.config.js -i tailwind/input.css -o css/tailwind.css --minify
+./tools/tailwindcss-macos-arm64 -c tailwind/tailwind.config.js -i tailwind/input.css -o css/app.css --minify
 ```
 
-`index.html`・`js/`・`tailwind/input.css` を変更したら再生成し、`css/tailwind.css` もコミットします。Play CDN は試作時のみ使用し、本番では使用しません。
+`index.html`・`js/`・`tailwind/input.css` を変更したら再生成し、`css/app.css` もコミットします（CI で最新かを確認します）。Play CDN は試作時のみ使用し、本番では使用しません。
 
 ### 3.2 ローカルでの確認
 

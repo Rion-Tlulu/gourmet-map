@@ -34,7 +34,7 @@
 
     <link rel="icon" href="./assets/images/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="./assets/images/favicon-192.png" type="image/png" sizes="192x192" />
-    <link rel="apple-touch-icon" href="./assets/images/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="./assets/images/favicon-192.png" />
 
     <!-- 表示設定を描画前に反映（同期読み込み） -->
     <script src="./js/boot.js"></script>
@@ -84,9 +84,7 @@
     />
 
     <!-- アプリCSS（Tailwind事前生成 → 補助CSS → アクセシビリティ） -->
-    <link rel="stylesheet" href="./css/tailwind.css" />
-    <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/accessibility.css" />
+    <link rel="stylesheet" href="./css/app.css" />
 
     <!-- 外部ライブラリ（版固定・SRI） -->
     <script
@@ -245,16 +243,7 @@
           </div>
 
           <div class="gm-hero-art" aria-hidden="true">
-            <img
-              src="./assets/images/hero-shop.jpg"
-              srcset="./assets/images/hero-shop.jpg 640w, ./assets/images/hero-shop-1280.jpg 1280w"
-              sizes="(min-width: 1440px) 1376px, 100vw"
-              alt=""
-              width="1280"
-              height="962"
-              decoding="async"
-              fetchpriority="high"
-            />
+            <img src="./assets/images/hero-shop.jpg" alt="" width="1024" height="770" decoding="async" fetchpriority="high" />
           </div>
         </div>
 
@@ -1176,7 +1165,7 @@
 
             <div class="gm-step" data-step="1">
               <div class="gm-step-art gm-step-art-wide" aria-hidden="true">
-                <img src="./assets/images/hero-shop.jpg" alt="" width="640" height="481" decoding="async" />
+                <img src="./assets/images/hero-shop.jpg" alt="" width="1024" height="770" decoding="async" />
               </div>
               <h3>グルメマップへようこそ！</h3>
               <p>いつもの場所から半径3km以内の<br />おいしいお店を見つけましょう。</p>

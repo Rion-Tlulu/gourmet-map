@@ -1,7 +1,12 @@
 /*
- * Tailwind CSS 入力ファイル
- * Preflight は無効（tailwind.config.js）。Bootstrap Reboot を基本スタイルとして使用。
- * 画面部品は @layer components に定義し、余白・配置は HTML 側の tw- ユーティリティで調整する。
+ * グルメマップのスタイル（このファイルから css/app.css を生成）
+ * Preflight は無効（tailwind/tailwind.config.js）。Bootstrap Reboot を基本スタイルとして使用。
+ *
+ * 構成（出力順＝適用順）
+ *   1. Tailwind の base / components / utilities
+ *      画面部品は @layer components に定義し、余白・配置は HTML 側の tw- ユーティリティで調整
+ *   2. デザイントークン・Bootstrap／Leaflet の調整（旧 css/style.css）
+ *   3. アクセシビリティ（旧 css/accessibility.css）
  */
 
 @tailwind base;
@@ -735,6 +740,24 @@
     @apply tw-rounded-none;
     aspect-ratio: 16 / 9;
     max-height: 14rem;
+  }
+
+  /* 店舗画像がない場合の代替画像（角丸・透過PNG。全体を見せる） */
+  .gm-shop-photo.is-placeholder img {
+    @apply tw-bg-transparent;
+    box-shadow: none;
+  }
+
+  .gm-shop-photo.gm-shop-photo-hero.is-placeholder {
+    background: var(--gm-grad-soft);
+  }
+
+  .gm-shop-photo.gm-shop-photo-hero.is-placeholder img {
+    @apply tw-mx-auto tw-py-3;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
   }
 
   .gm-shop-photo-hero figcaption {
@@ -1486,4 +1509,737 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ========================================
+   ここから通常のCSS（Tailwind の後に出力）
+   - デザイントークン（CSS変数）
+   - Bootstrap・Leaflet の見た目調整
+   - アクセシビリティ
+======================================== */
+
+/* ========================================
+   01. デザイントークン（ライト）
+   コントラスト比は WCAG 2.2 AA（通常文字 4.5:1、UI 3:1）を目安に設定
+======================================== */
+
+:root {
+  color-scheme: light;
+
+  --gm-bg: #fff8f1;
+  --gm-surface: #ffffff;
+  --gm-surface-2: #fff4e8;
+  --gm-hero-bg: linear-gradient(135deg, #fff1e1 0%, #ffe4c9 100%);
+
+  --gm-text: #3b2117;
+  --gm-muted: #6b5a50;
+  --gm-border: #f0dfcf;
+  --gm-border-strong: #8c7a6e;
+
+  --gm-primary: #c2410c;
+  --gm-primary-strong: #ea580c;
+  --gm-primary-hover: #9a3412;
+  --gm-on-primary: #ffffff;
+  --gm-primary-shadow: rgb(194 65 12 / 22%);
+
+  --gm-accent: #ffedd5;
+  --gm-accent-text: #9a3412;
+
+  --gm-success: #166534;
+  --gm-success-bg: #f0fdf4;
+  --gm-danger: #b91c1c;
+  --gm-danger-bg: #fef2f2;
+  --gm-warning: #92400e;
+  --gm-warning-bg: #fffbeb;
+  --gm-info: #1e40af;
+  --gm-info-bg: #eff6ff;
+
+  --gm-heart: #dc2626;
+  --gm-focus: #1d4ed8;
+
+  --gm-chip-green: #166534;
+  --gm-chip-green-bg: #ecfdf0;
+  --gm-chip-green-border: #a7dcb5;
+
+  --gm-icon-orange: #c2410c;
+  --gm-icon-orange-bg: #ffe7d1;
+  --gm-icon-green: #15803d;
+  --gm-icon-green-bg: #dcfce7;
+  --gm-icon-teal: #0f766e;
+  --gm-icon-teal-bg: #d5f5f0;
+
+  --gm-toast-bg: #2b1a12;
+  --gm-toast-text: #ffffff;
+  --gm-toast-success: #86efac;
+  --gm-toast-info: #93c5fd;
+  --gm-toast-danger: #fca5a5;
+
+  --gm-shadow: 0 1px 2px rgb(59 33 23 / 6%), 0 6px 20px rgb(59 33 23 / 7%);
+  --gm-shadow-lg: 0 2px 4px rgb(59 33 23 / 6%), 0 14px 34px rgb(59 33 23 / 14%);
+
+  /* グラデーション（白文字とのコントラスト 4.6:1 以上） */
+  --gm-grad-primary: linear-gradient(135deg, #cc4a12 0%, #b3300b 100%);
+  --gm-grad-primary-hover: linear-gradient(135deg, #b3300b 0%, #9a2a09 100%);
+  --gm-grad-soft: linear-gradient(135deg, #fff3e6 0%, #ffe2c7 100%);
+  --gm-glass: rgb(255 255 255 / 82%);
+  --gm-hero-overlay: linear-gradient(
+    90deg,
+    rgb(36 18 8 / 88%) 0%,
+    rgb(36 18 8 / 70%) 42%,
+    rgb(36 18 8 / 10%) 100%
+  );
+  --gm-hero-overlay-sm: linear-gradient(
+    180deg,
+    rgb(36 18 8 / 15%) 0%,
+    rgb(36 18 8 / 55%) 45%,
+    rgb(36 18 8 / 90%) 100%
+  );
+  --gm-page-deco:
+    radial-gradient(60rem 30rem at 100% -10%, rgb(251 146 60 / 12%), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 30%, rgb(132 204 22 / 7%), transparent 60%);
+
+  --gm-font:
+    "Inter", "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", Meiryo, sans-serif;
+}
+
+/* ========================================
+   02. デザイントークン（ダーク）
+======================================== */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --gm-bg: #171311;
+  --gm-surface: #241d1a;
+  --gm-surface-2: #2e2521;
+  --gm-hero-bg: linear-gradient(135deg, #2e2119 0%, #3a2618 100%);
+
+  --gm-text: #fff7ed;
+  --gm-muted: #d6cbc3;
+  --gm-border: #43362f;
+  --gm-border-strong: #a39187;
+
+  --gm-primary: #fdba74;
+  --gm-primary-strong: #ea580c;
+  --gm-primary-hover: #fed7aa;
+  --gm-on-primary: #1c1310;
+  --gm-primary-shadow: rgb(0 0 0 / 30%);
+
+  --gm-accent: #45301f;
+  --gm-accent-text: #fed7aa;
+
+  --gm-success: #86efac;
+  --gm-success-bg: #143022;
+  --gm-danger: #fca5a5;
+  --gm-danger-bg: #3d1717;
+  --gm-warning: #fcd34d;
+  --gm-warning-bg: #3a2c0c;
+  --gm-info: #93c5fd;
+  --gm-info-bg: #172440;
+
+  --gm-heart: #fb7185;
+  --gm-focus: #93c5fd;
+
+  --gm-chip-green: #bbf7d0;
+  --gm-chip-green-bg: #163322;
+  --gm-chip-green-border: #2f6b45;
+
+  --gm-icon-orange: #fdba74;
+  --gm-icon-orange-bg: #45301f;
+  --gm-icon-green: #86efac;
+  --gm-icon-green-bg: #173623;
+  --gm-icon-teal: #5eead4;
+  --gm-icon-teal-bg: #133632;
+
+  --gm-toast-bg: #fff7ed;
+  --gm-toast-text: #1c1310;
+  --gm-toast-success: #15803d;
+  --gm-toast-info: #1d4ed8;
+  --gm-toast-danger: #b91c1c;
+
+  --gm-shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 18px rgb(0 0 0 / 35%);
+  --gm-shadow-lg: 0 2px 4px rgb(0 0 0 / 45%), 0 14px 30px rgb(0 0 0 / 50%);
+
+  --gm-grad-primary: linear-gradient(135deg, #fdba74 0%, #fb923c 100%);
+  --gm-grad-primary-hover: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  --gm-grad-soft: linear-gradient(135deg, #33251d 0%, #3d2a1c 100%);
+  --gm-glass: rgb(36 29 26 / 82%);
+  --gm-page-deco:
+    radial-gradient(60rem 30rem at 100% -10%, rgb(251 146 60 / 9%), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 30%, rgb(132 204 22 / 5%), transparent 60%);
+}
+
+/* ========================================
+   03. Bootstrap 変数の上書き（テーマ連動）
+======================================== */
+
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+  --bs-body-font-family: var(--gm-font);
+  --bs-body-bg: var(--gm-bg);
+  --bs-body-color: var(--gm-text);
+  --bs-secondary-color: var(--gm-muted);
+  --bs-border-color: var(--gm-border);
+  --bs-emphasis-color: var(--gm-text);
+  --bs-link-color: var(--gm-primary);
+  --bs-link-hover-color: var(--gm-primary-hover);
+  --bs-focus-ring-color: var(--gm-focus);
+  --bs-modal-bg: var(--gm-surface);
+  --bs-dropdown-bg: var(--gm-surface);
+  --bs-dropdown-color: var(--gm-text);
+  --bs-dropdown-link-color: var(--gm-text);
+  --bs-dropdown-link-hover-bg: var(--gm-accent);
+  --bs-dropdown-link-hover-color: var(--gm-text);
+  --bs-dropdown-link-active-bg: var(--gm-accent);
+  --bs-dropdown-link-active-color: var(--gm-text);
+  --bs-dropdown-border-color: var(--gm-border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+  scroll-padding-bottom: 6rem;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--gm-font);
+  color: var(--gm-text);
+  background: var(--gm-page-deco, none), var(--gm-bg);
+  background-attachment: fixed;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+a {
+  color: var(--gm-primary);
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--gm-primary-hover);
+}
+
+button {
+  color: inherit;
+}
+
+main:focus,
+h1:focus,
+h2:focus,
+h3:focus {
+  outline: none;
+}
+
+/* モーダル */
+.gm-modal .modal-content {
+  color: var(--gm-text);
+  background: var(--gm-surface);
+  border: 1px solid var(--gm-border);
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+.gm-modal .modal-header,
+.gm-modal .modal-footer {
+  border-color: var(--gm-border);
+}
+
+.gm-modal .modal-footer {
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 575.98px) {
+  .gm-modal .modal-fullscreen-sm-down .modal-content {
+    border-radius: 0;
+    border: 0;
+  }
+}
+
+.modal-backdrop.show {
+  opacity: 0.55;
+}
+
+/* オフキャンバス（ボトムシート） */
+.gm-sheet.offcanvas-bottom {
+  height: auto;
+  max-height: 92vh;
+  max-height: 92dvh;
+  color: var(--gm-text);
+  background: var(--gm-surface);
+  border-top: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  z-index: 1060;
+}
+
+@media (min-width: 1024px) {
+  .gm-sheet.offcanvas-bottom {
+    left: calc(50% - 22rem);
+    right: calc(50% - 22rem);
+  }
+}
+
+.offcanvas-backdrop {
+  z-index: 1055;
+}
+
+/* フォームスイッチ */
+.form-check-input {
+  background-color: var(--gm-surface);
+  border: 2px solid var(--gm-border-strong);
+}
+
+.form-check-input:checked {
+  background-color: var(--gm-primary);
+  border-color: var(--gm-primary);
+}
+
+.form-switch .form-check-input:checked {
+  --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+html[data-theme="dark"] .form-switch .form-check-input:checked {
+  --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%231c1310'/%3e%3c/svg%3e");
+}
+
+.form-check-input:focus {
+  border-color: var(--gm-focus);
+  box-shadow: 0 0 0 0.2rem rgb(29 78 216 / 35%);
+}
+
+/* ドロップダウン */
+.dropdown-menu {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+}
+
+.dropdown-item[aria-current="true"] {
+  font-weight: 800;
+  color: var(--gm-primary);
+}
+
+/* トースト */
+.toast.gm-toast {
+  --bs-toast-max-width: 28rem;
+}
+
+/* ========================================
+   04. Leaflet（地図）
+======================================== */
+
+.leaflet-container {
+  font-family: var(--gm-font);
+  background: var(--gm-surface-2);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  color: #3b2117;
+  background: #ffffff;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+  min-width: 11rem;
+}
+
+.gm-popup strong {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.gm-popup p {
+  margin: 0.15rem 0;
+  font-size: 0.8rem;
+  color: #6b5a50;
+}
+
+.gm-popup .gm-btn {
+  margin-top: 0.4rem;
+  width: 100%;
+  color: #ffffff;
+  background: #c2410c;
+  border-color: #c2410c;
+}
+
+.leaflet-control-attribution {
+  font-size: 0.7rem;
+}
+
+.leaflet-control-attribution a,
+.leaflet-container a.leaflet-popup-close-button {
+  color: #1d4ed8;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+  line-height: 30px;
+}
+
+.leaflet-bar a {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+}
+
+/* マーカー */
+.gm-marker-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.gm-marker {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+  font-size: 15px;
+}
+
+.gm-marker > i {
+  transform: rotate(45deg);
+}
+
+.gm-marker-shop {
+  background: #c2410c;
+}
+
+.gm-marker-favorite {
+  background: #be123c;
+}
+
+.gm-marker-origin {
+  width: 40px;
+  height: 40px;
+  background: #1d4ed8;
+  font-size: 18px;
+}
+
+/* 距離フィルター円のラベル（デザイン：半径3km） */
+.gm-radius-label-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.gm-radius-label {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  padding: 2px 10px;
+  color: #ffffff;
+  background: #c2410c;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+}
+
+/* 登録地点に戻るボタン */
+.gm-recenter {
+  display: grid !important;
+  place-items: center;
+  font-size: 16px;
+  color: #3b2117 !important;
+  cursor: pointer;
+}
+
+.gm-origin-tooltip {
+  font-weight: 700;
+  color: #1e3a8a;
+  border: 2px solid #1d4ed8;
+}
+
+.leaflet-marker-icon:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+/* ========================================
+   05. その他
+======================================== */
+
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+}
+
+/* ボトムナビ分の余白（スマートフォン・タブレット） */
+@media (max-width: 1023.98px) {
+  .gm-toast-container {
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  .gm-toast-container {
+    bottom: 1.5rem;
+  }
+
+  #map-panel {
+    position: sticky;
+    top: 5.5rem;
+  }
+
+  #restaurant-map {
+    height: calc(100vh - 9rem);
+    min-height: 480px;
+  }
+}
+
+/* 横画面・高さが低い画面 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gm-bottom-nav a {
+    min-height: 44px;
+  }
+
+  .gm-header {
+    position: static;
+  }
+}
+
+/* ========================================
+   アクセシビリティ（UX-03〜07）
+======================================== */
+
+/* ========================================
+   01. フォーカスの可視化
+======================================== */
+
+:focus-visible {
+  outline: 3px solid var(--gm-focus);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  z-index: 5000;
+  min-height: 44px;
+  padding: 12px 16px;
+  color: var(--gm-text);
+  background: var(--gm-surface);
+  border: 2px solid var(--gm-focus);
+  border-radius: 0 0 12px 12px;
+  font-weight: 700;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ========================================
+   02. 文字サイズ（標準／大／特大）
+======================================== */
+
+html[data-font-size="normal"] {
+  font-size: 100%;
+}
+
+html[data-font-size="large"] {
+  font-size: 112.5%;
+}
+
+html[data-font-size="extra-large"] {
+  font-size: 125%;
+}
+
+/* ========================================
+   03. ハイコントラスト
+======================================== */
+
+html[data-contrast="high"] {
+  --gm-bg: #ffffff;
+  --gm-surface: #ffffff;
+  --gm-surface-2: #ffffff;
+  --gm-hero-bg: #ffffff;
+
+  --gm-text: #000000;
+  --gm-muted: #1f1f1f;
+  --gm-border: #000000;
+  --gm-border-strong: #000000;
+
+  --gm-primary: #8a2c08;
+  --gm-primary-hover: #5c1d05;
+  --gm-on-primary: #ffffff;
+
+  --gm-accent: #fff1e0;
+  --gm-accent-text: #5c1d05;
+
+  --gm-chip-green: #0b3d1f;
+  --gm-chip-green-bg: #ffffff;
+  --gm-chip-green-border: #0b3d1f;
+
+  --gm-shadow: none;
+  --gm-shadow-lg: none;
+  --gm-grad-primary: #8a2c08;
+  --gm-grad-primary-hover: #5c1d05;
+  --gm-grad-soft: #ffffff;
+  --gm-glass: #ffffff;
+  --gm-page-deco: none;
+  --gm-hero-overlay: rgb(0 0 0 / 82%);
+  --gm-hero-overlay-sm: rgb(0 0 0 / 82%);
+}
+
+html[data-theme="dark"][data-contrast="high"] {
+  --gm-bg: #000000;
+  --gm-surface: #000000;
+  --gm-surface-2: #000000;
+  --gm-hero-bg: #000000;
+
+  --gm-text: #ffffff;
+  --gm-muted: #ffffff;
+  --gm-border: #ffffff;
+  --gm-border-strong: #ffffff;
+
+  --gm-primary: #ffd2a8;
+  --gm-primary-hover: #ffffff;
+  --gm-on-primary: #000000;
+
+  --gm-accent: #1f1f1f;
+  --gm-accent-text: #ffffff;
+
+  --gm-chip-green: #ffffff;
+  --gm-chip-green-bg: #000000;
+  --gm-chip-green-border: #ffffff;
+
+  --gm-shadow: none;
+  --gm-shadow-lg: none;
+  --gm-grad-primary: #ffd2a8;
+  --gm-grad-primary-hover: #ffffff;
+  --gm-grad-soft: #000000;
+  --gm-glass: #000000;
+  --gm-page-deco: none;
+}
+
+html[data-contrast="high"] .gm-btn,
+html[data-contrast="high"] .gm-input,
+html[data-contrast="high"] .gm-card,
+html[data-contrast="high"] .gm-shop-card,
+html[data-contrast="high"] .gm-chip {
+  border-width: 2px;
+}
+
+html[data-contrast="high"] a {
+  text-decoration: underline;
+}
+
+/* ========================================
+   04. 動きの低減（アプリ設定・OS設定の両方を尊重）
+======================================== */
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-reduce-motion="true"] .gm-spinner {
+  animation: none !important;
+  border-top-color: var(--gm-accent);
+  border-right-color: var(--gm-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .gm-spinner {
+    animation: none !important;
+    border-right-color: var(--gm-primary);
+  }
+}
+
+/* ========================================
+   05. OSの強制カラー（Windows ハイコントラスト）
+======================================== */
+
+@media (forced-colors: active) {
+  .gm-btn,
+  .gm-input,
+  .gm-card,
+  .gm-shop-card,
+  .gm-chip,
+  .gm-quick-item,
+  .gm-toggle-chip span,
+  .gm-segment label {
+    border: 1px solid ButtonText;
+  }
+
+  [aria-current="page"],
+  [aria-pressed="true"],
+  .btn-check:checked + label,
+  .gm-toggle-chip input:checked + span {
+    outline: 2px solid Highlight;
+  }
+
+  .gm-marker {
+    forced-color-adjust: none;
+  }
+}
+
+/* ========================================
+   06. 320px幅でのリフロー
+======================================== */
+
+@media (max-width: 380px) {
+  .gm-main {
+    padding-inline: 0.75rem;
+  }
+
+  .gm-shop-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gm-shop-photo-card img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .gm-detail-dl,
+  .gm-kv {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gm-detail-dl dd,
+  .gm-kv dd {
+    margin-bottom: 0.5rem;
+  }
+
+  .gm-quick-item {
+    font-size: 0.75rem;
+  }
+
+  .gm-brand-sub {
+    display: none;
+  }
+}
+
+/* 文字を大きくした場合の調整 */
+html[data-font-size="extra-large"] .gm-quick {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+}
+
+html[data-font-size="extra-large"] .gm-bottom-nav a {
+  font-size: 0.6rem;
 }

@@ -1,12 +1,13 @@
 /**
  * Tailwind CSS 設定（v3.4.17 スタンドアロンCLIで使用）
  *
+ * - content のパスはリポジトリ直下で実行した場合の相対パス
  * - Bootstrap と併用するため、クラス名に「tw-」接頭辞を付けて競合を回避
  * - Bootstrap Reboot と重複しないよう Preflight を無効化
  * - 色はCSS変数を参照し、ダーク・ハイコントラストに自動追従
  *
  * 生成コマンド（README参照）：
- *   tailwindcss -c tailwind.config.js -i tailwind/input.css -o css/tailwind.css --minify
+ *   tailwindcss -c tailwind/tailwind.config.js -i tailwind/input.css -o css/app.css --minify
  */
 module.exports = {
   prefix: "tw-",

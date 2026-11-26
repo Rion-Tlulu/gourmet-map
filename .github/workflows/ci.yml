@@ -47,5 +47,21 @@ jobs:
 
       - name: Build and compare
         run: |
-          ./tailwindcss -c tailwind.config.js -i tailwind/input.css -o /tmp/tailwind.css --minify
-          diff -q /tmp/tailwind.css css/tailwind.css || (echo "css/tailwind.css を再生成してください" && exit 1)
+          ./tailwindcss -c tailwind/tailwind.config.js -i tailwind/input.css -o /tmp/app.css --minify
+          diff -q /tmp/app.css css/app.css || (echo "css/app.css を再生成してください" && exit 1)
+
+  # 秘密情報の漏洩検査（SEC-06）
+  secret-scan:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
