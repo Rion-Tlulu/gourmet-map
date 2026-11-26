@@ -1,0 +1,1282 @@
+/*
+ * Tailwind CSS 入力ファイル
+ * Preflight は無効（tailwind.config.js）。Bootstrap Reboot を基本スタイルとして使用。
+ * 画面部品は @layer components に定義し、余白・配置は HTML 側の tw- ユーティリティで調整する。
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* =========================
+     レイアウト
+  ========================= */
+
+  .gm-main {
+    @apply tw-mx-auto tw-w-full tw-flex-1 tw-px-4 tw-pb-8 tw-pt-4 md:tw-px-6 lg:tw-px-8;
+    max-width: 1440px;
+  }
+
+  .gm-page {
+    @apply tw-mx-auto tw-w-full;
+  }
+
+  .gm-page-narrow {
+    max-width: 52rem;
+  }
+
+  .gm-page-head {
+    @apply tw-mb-4 tw-flex tw-items-center tw-gap-3;
+  }
+
+  .gm-page-title {
+    @apply tw-m-0 tw-flex-1 tw-text-xl tw-font-extrabold md:tw-text-2xl;
+  }
+
+  .gm-back-link {
+    @apply tw-inline-flex tw-h-11 tw-w-11 tw-shrink-0 tw-items-center tw-justify-center tw-rounded-full tw-text-ink tw-no-underline;
+  }
+
+  .gm-back-link:hover {
+    @apply tw-bg-accent;
+  }
+
+  /* =========================
+     ヘッダー
+  ========================= */
+
+  .gm-header {
+    @apply tw-sticky tw-top-0 tw-border-b tw-border-solid tw-border-line tw-bg-surface;
+    border-width: 0 0 1px;
+    z-index: 1020;
+  }
+
+  .gm-header-inner {
+    @apply tw-mx-auto tw-flex tw-items-center tw-gap-3 tw-px-4 tw-py-2 lg:tw-px-8;
+    max-width: 1440px;
+  }
+
+  .gm-brand {
+    @apply tw-flex tw-min-w-0 tw-items-center tw-gap-2.5 tw-text-ink tw-no-underline;
+  }
+
+  .gm-brand-icon {
+    @apply tw-grid tw-h-11 tw-w-11 tw-shrink-0 tw-place-items-center tw-text-xl tw-text-white;
+    background: var(--gm-primary-strong);
+    border-radius: 50% 50% 50% 12%;
+    transform: rotate(-45deg);
+  }
+
+  .gm-brand-icon > i {
+    transform: rotate(45deg);
+  }
+
+  .gm-brand-title {
+    @apply tw-text-lg tw-font-extrabold tw-tracking-wide md:tw-text-xl;
+  }
+
+  .gm-brand-sub {
+    @apply tw-text-xs tw-font-semibold tw-text-muted;
+    font-family: Inter, sans-serif;
+    letter-spacing: 0.06em;
+  }
+
+  .gm-desktop-nav {
+    @apply tw-ml-6 tw-hidden tw-items-center tw-gap-1 lg:tw-flex;
+  }
+
+  .gm-desktop-nav a {
+    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-lg tw-px-3 tw-font-semibold tw-text-ink tw-no-underline;
+    border-bottom: 3px solid transparent;
+  }
+
+  .gm-desktop-nav a:hover {
+    @apply tw-bg-accent;
+  }
+
+  .gm-desktop-nav a[aria-current="page"] {
+    @apply tw-text-primary;
+    border-bottom-color: var(--gm-primary);
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .gm-header-actions {
+    @apply tw-ml-auto tw-flex tw-items-center tw-gap-1;
+  }
+
+  .gm-location-pill {
+    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-4 tw-text-sm tw-font-semibold tw-text-ink;
+  }
+
+  .gm-location-pill > .fa-location-dot {
+    @apply tw-text-primary;
+  }
+
+  /* =========================
+     ボタン
+  ========================= */
+
+  .gm-btn {
+    @apply tw-inline-flex tw-min-h-[44px] tw-cursor-pointer tw-select-none tw-items-center tw-justify-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-transparent tw-px-5 tw-py-2 tw-text-center tw-font-bold tw-leading-tight tw-no-underline;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .gm-btn:disabled,
+  .gm-btn[aria-disabled="true"] {
+    @apply tw-cursor-not-allowed tw-opacity-60;
+  }
+
+  .gm-btn-sm {
+    @apply tw-min-h-[44px] tw-px-3.5 tw-py-1.5 tw-text-sm;
+  }
+
+  .gm-btn-lg {
+    @apply tw-min-h-[52px] tw-px-6 tw-text-base;
+  }
+
+  .gm-btn-primary {
+    @apply tw-bg-primary tw-text-on-primary;
+    border-color: var(--gm-primary);
+    box-shadow: 0 4px 12px var(--gm-primary-shadow);
+  }
+
+  .gm-btn-primary:hover:not(:disabled) {
+    @apply tw-bg-primary-hover tw-text-on-primary;
+    border-color: var(--gm-primary-hover);
+  }
+
+  .gm-btn-outline {
+    @apply tw-border-line-strong tw-bg-surface tw-text-ink;
+  }
+
+  .gm-btn-outline:hover:not(:disabled) {
+    @apply tw-border-primary tw-text-ink;
+  }
+
+  .gm-btn-outline-primary {
+    @apply tw-border-primary tw-bg-surface tw-text-primary;
+  }
+
+  .gm-btn-outline-primary:hover:not(:disabled) {
+    @apply tw-bg-accent tw-text-primary;
+  }
+
+  .gm-btn-soft {
+    @apply tw-bg-accent tw-text-accent-ink;
+  }
+
+  .gm-btn-soft:hover:not(:disabled) {
+    @apply tw-border-primary tw-text-accent-ink;
+  }
+
+  .gm-btn-ghost {
+    @apply tw-bg-transparent tw-text-primary;
+  }
+
+  .gm-btn-ghost:hover:not(:disabled) {
+    @apply tw-bg-accent tw-text-primary;
+  }
+
+  .gm-btn-danger {
+    @apply tw-border-danger tw-bg-danger-bg tw-text-danger;
+  }
+
+  .gm-btn-danger:hover:not(:disabled) {
+    @apply tw-bg-danger tw-text-white;
+  }
+
+  .gm-icon-btn {
+    @apply tw-inline-flex tw-h-11 tw-w-11 tw-shrink-0 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-transparent tw-text-lg tw-text-ink tw-no-underline;
+  }
+
+  .gm-icon-btn:hover {
+    @apply tw-bg-accent tw-text-ink;
+  }
+
+  .gm-icon-btn.dropdown-toggle::after {
+    display: none;
+  }
+
+  .gm-icon-btn-sm {
+    @apply tw-h-11 tw-w-11 tw-text-base;
+  }
+
+  .gm-icon-btn-primary {
+    @apply tw-text-primary;
+  }
+
+  .gm-icon-btn-danger {
+    @apply tw-text-danger;
+  }
+
+  .gm-text-link {
+    @apply tw-inline-flex tw-min-h-[44px] tw-items-center tw-font-semibold tw-text-primary;
+  }
+
+  .gm-text-danger {
+    color: var(--gm-danger) !important;
+  }
+
+  /* =========================
+     カード・見出し
+  ========================= */
+
+  .gm-card {
+    @apply tw-rounded-card tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-4 tw-shadow-card md:tw-p-5;
+  }
+
+  .gm-card-title {
+    @apply tw-mb-3 tw-text-lg tw-font-extrabold;
+  }
+
+  .gm-section-title {
+    @apply tw-mb-2 tw-text-base tw-font-extrabold;
+  }
+
+  .gm-eyebrow {
+    @apply tw-mb-2 tw-text-sm tw-font-bold tw-text-primary;
+  }
+
+  .gm-help {
+    @apply tw-text-sm tw-text-muted;
+  }
+
+  .gm-error-text {
+    @apply tw-text-sm tw-font-semibold tw-text-danger;
+  }
+
+  .gm-required {
+    @apply tw-ml-1 tw-rounded tw-bg-danger-bg tw-px-1.5 tw-py-0.5 tw-text-xs tw-font-bold tw-text-danger;
+  }
+
+  /* =========================
+     ホーム
+  ========================= */
+
+  .gm-hero {
+    @apply tw-mb-4 tw-flex tw-items-center tw-gap-3 tw-rounded-card tw-px-4 tw-py-5 md:tw-px-8 md:tw-py-8;
+    background: var(--gm-hero-bg);
+  }
+
+  .gm-hero-title {
+    @apply tw-m-0 tw-text-2xl tw-font-extrabold tw-leading-snug md:tw-text-4xl;
+    letter-spacing: 0.02em;
+  }
+
+  .gm-hero-art {
+    @apply tw-w-28 tw-shrink-0 sm:tw-w-40 md:tw-w-56;
+  }
+
+  .gm-hero-art svg {
+    @apply tw-block tw-h-auto tw-w-full;
+  }
+
+  .gm-quick {
+    @apply tw-m-0 tw-grid tw-grid-cols-3 tw-gap-2 tw-border-0 tw-p-0;
+  }
+
+  .gm-quick-item {
+    @apply tw-relative tw-flex tw-min-h-[88px] tw-cursor-pointer tw-flex-col tw-items-center tw-justify-center tw-gap-1 tw-rounded-2xl tw-border-2 tw-border-solid tw-border-line tw-bg-surface-2 tw-px-1 tw-py-2 tw-text-center tw-text-xs tw-font-bold sm:tw-text-sm;
+  }
+
+  .gm-quick-input {
+    @apply tw-absolute tw-opacity-0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .gm-quick-item:has(.gm-quick-input:checked) {
+    @apply tw-border-primary tw-bg-accent;
+  }
+
+  .gm-quick-item:has(.gm-quick-input:checked)::after {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    @apply tw-absolute tw-right-2 tw-top-1.5 tw-text-xs tw-text-primary;
+  }
+
+  .gm-quick-item:has(.gm-quick-input:focus-visible) {
+    outline: 3px solid var(--gm-focus);
+    outline-offset: 2px;
+  }
+
+  .gm-quick-icon {
+    @apply tw-grid tw-h-10 tw-w-10 tw-place-items-center tw-rounded-full tw-text-lg;
+  }
+
+  .gm-quick-icon-orange {
+    background: var(--gm-icon-orange-bg);
+    color: var(--gm-icon-orange);
+  }
+
+  .gm-quick-icon-green {
+    background: var(--gm-icon-green-bg);
+    color: var(--gm-icon-green);
+  }
+
+  .gm-quick-icon-teal {
+    background: var(--gm-icon-teal-bg);
+    color: var(--gm-icon-teal);
+  }
+
+  .gm-inline-empty {
+    @apply tw-mt-2 tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-gap-2 tw-rounded-xl tw-bg-surface-2 tw-p-3;
+  }
+
+  /* =========================
+     フォーム
+  ========================= */
+
+  .gm-label {
+    @apply tw-mb-1.5 tw-flex tw-items-center tw-gap-1.5 tw-text-sm tw-font-bold;
+  }
+
+  .gm-input {
+    @apply tw-block tw-min-h-[48px] tw-w-full tw-min-w-0 tw-rounded-xl tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-3.5 tw-py-2 tw-text-base tw-text-ink;
+  }
+
+  .gm-input::placeholder {
+    @apply tw-text-muted tw-opacity-100;
+  }
+
+  .gm-input[aria-invalid="true"],
+  .gm-input[aria-invalid=""] {
+    @apply tw-border-danger;
+    border-width: 2px;
+  }
+
+  .gm-input-sm {
+    @apply tw-min-h-[44px] tw-w-auto tw-py-1.5 tw-text-sm;
+  }
+
+  .gm-select-wrap {
+    @apply tw-relative;
+  }
+
+  .gm-input-icon {
+    @apply tw-pointer-events-none tw-absolute tw-left-3.5 tw-top-1/2 tw--translate-y-1/2 tw-text-muted;
+  }
+
+  .gm-input-with-icon {
+    @apply tw-pl-10;
+  }
+
+  .gm-radio-list {
+    @apply tw-grid tw-gap-1;
+  }
+
+  .gm-radio-list label {
+    @apply tw-flex tw-min-h-[44px] tw-cursor-pointer tw-items-center tw-gap-2;
+  }
+
+  /* セグメント（Bootstrap の .btn-check を利用したラジオ） */
+  .gm-segment {
+    @apply tw-grid tw-auto-cols-fr tw-grid-flow-col tw-gap-1 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface-2 tw-p-1;
+  }
+
+  .gm-segment label {
+    @apply tw-flex tw-min-h-[40px] tw-cursor-pointer tw-items-center tw-justify-center tw-gap-1 tw-rounded-full tw-px-2 tw-text-sm tw-font-bold tw-text-ink;
+  }
+
+  .gm-segment .btn-check:checked + label {
+    @apply tw-bg-primary tw-text-on-primary;
+  }
+
+  .gm-segment .btn-check:focus-visible + label {
+    outline: 3px solid var(--gm-focus);
+    outline-offset: 2px;
+  }
+
+  .gm-setting-row {
+    @apply tw-m-0 tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-gap-3 tw-border-0 tw-border-b tw-border-solid tw-border-line tw-py-3;
+  }
+
+  .gm-setting-row > .gm-segment {
+    @apply tw-w-full sm:tw-w-auto sm:tw-min-w-[18rem];
+  }
+
+  .gm-setting-label {
+    @apply tw-float-none tw-m-0 tw-w-auto tw-p-0 tw-text-base tw-font-bold;
+  }
+
+  .gm-switch-row {
+    @apply tw-flex tw-flex-nowrap tw-items-center tw-justify-between tw-gap-4 tw-pl-0;
+  }
+
+  .gm-switch-row .form-check-input {
+    @apply tw-float-none tw-m-0 tw-h-7 tw-w-12 tw-shrink-0 tw-cursor-pointer;
+  }
+
+  .gm-switch-row .form-check-label {
+    @apply tw-min-w-0 tw-flex-1 tw-cursor-pointer;
+  }
+
+  /* =========================
+     チップ・バッジ
+  ========================= */
+
+  .gm-chip-row {
+    @apply tw-m-0 tw-flex tw-list-none tw-flex-wrap tw-gap-1.5 tw-p-0;
+  }
+
+  .gm-chip {
+    @apply tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded-full tw-border tw-border-solid tw-px-2.5 tw-py-0.5 tw-text-xs tw-font-bold;
+  }
+
+  .gm-chip-genre {
+    @apply tw-border-transparent tw-bg-accent tw-text-accent-ink;
+  }
+
+  .gm-chip-filter {
+    @apply tw-min-h-[36px] tw-cursor-pointer tw-px-3 tw-text-sm;
+    background: var(--gm-chip-green-bg);
+    border-color: var(--gm-chip-green-border);
+    color: var(--gm-chip-green);
+  }
+
+  .gm-chip-filter:hover {
+    border-color: var(--gm-chip-green);
+  }
+
+  .gm-chip-tab {
+    @apply tw-min-h-[40px] tw-cursor-pointer tw-border-line-strong tw-bg-surface tw-px-3.5 tw-text-sm tw-text-ink;
+  }
+
+  .gm-chip-tab[aria-pressed="true"] {
+    @apply tw-border-primary tw-bg-primary tw-text-on-primary;
+  }
+
+  .gm-badge {
+    @apply tw-inline-flex tw-min-w-[1.4rem] tw-items-center tw-justify-center tw-rounded-full tw-bg-primary tw-px-1.5 tw-text-xs tw-font-bold tw-text-on-primary;
+  }
+
+  .gm-badge-soft {
+    @apply tw-bg-accent tw-text-accent-ink;
+  }
+
+  /* =========================
+     リスト
+  ========================= */
+
+  .gm-list {
+    @apply tw-m-0 tw-grid tw-list-none tw-gap-2 tw-p-0;
+  }
+
+  .gm-list-item {
+    @apply tw-flex tw-items-center tw-gap-1 tw-rounded-xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-pr-1;
+  }
+
+  .gm-list-main {
+    @apply tw-flex tw-min-h-[52px] tw-min-w-0 tw-flex-1 tw-cursor-pointer tw-items-center tw-gap-3 tw-rounded-xl tw-border-0 tw-bg-transparent tw-px-3 tw-py-2 tw-text-ink;
+  }
+
+  .gm-list-main:hover {
+    @apply tw-bg-surface-2;
+  }
+
+  .gm-list-main[aria-current="true"] .gm-list-icon {
+    @apply tw-bg-primary tw-text-on-primary;
+  }
+
+  .gm-list-icon {
+    @apply tw-grid tw-h-9 tw-w-9 tw-shrink-0 tw-place-items-center tw-rounded-full tw-bg-accent tw-text-primary;
+  }
+
+  .gm-list-icon-lg {
+    @apply tw-h-12 tw-w-12 tw-rounded-2xl tw-text-xl;
+  }
+
+  .gm-list-title {
+    @apply tw-m-0 tw-block tw-text-base tw-font-bold tw-leading-snug;
+  }
+
+  .gm-list-sub {
+    @apply tw-m-0 tw-block tw-text-sm tw-text-muted;
+    overflow-wrap: anywhere;
+  }
+
+  .gm-list-cards {
+    @apply tw-gap-3;
+  }
+
+  .gm-list-card {
+    @apply tw-flex tw-flex-wrap tw-items-start tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-4 tw-shadow-card sm:tw-flex-nowrap;
+  }
+
+  .gm-list-card.is-active {
+    @apply tw-border-primary;
+    border-width: 2px;
+  }
+
+  .gm-list-actions {
+    @apply tw-ml-auto tw-flex tw-shrink-0 tw-items-center tw-gap-1;
+  }
+
+  .gm-menu-list {
+    @apply tw-m-0 tw-list-none tw-p-0;
+  }
+
+  .gm-menu-list a {
+    @apply tw-flex tw-min-h-[52px] tw-items-center tw-gap-3 tw-border-0 tw-border-b tw-border-solid tw-border-line tw-px-1 tw-font-semibold tw-text-ink tw-no-underline;
+  }
+
+  .gm-menu-list a > i:first-child {
+    @apply tw-w-6 tw-text-center tw-text-primary;
+  }
+
+  .gm-menu-list a > i:last-child {
+    @apply tw-ml-auto tw-text-sm tw-text-muted;
+  }
+
+  .gm-menu-list a:hover {
+    @apply tw-bg-surface-2;
+  }
+
+  .gm-menu-list li:last-child a {
+    border-bottom: 0;
+  }
+
+  /* =========================
+     検索結果
+  ========================= */
+
+  .gm-location-bar {
+    @apply tw-mb-3 tw-flex tw-items-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-line tw-bg-surface tw-py-1.5 tw-pl-4 tw-pr-1.5 tw-shadow-card;
+  }
+
+  .gm-view-switch {
+    @apply tw-mb-3 tw-grid tw-grid-cols-2 tw-gap-1 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-p-1;
+  }
+
+  .gm-view-switch button {
+    @apply tw-flex tw-min-h-[44px] tw-cursor-pointer tw-items-center tw-justify-center tw-gap-2 tw-rounded-full tw-border-0 tw-bg-transparent tw-font-bold tw-text-ink;
+  }
+
+  .gm-view-switch button[aria-pressed="true"] {
+    @apply tw-bg-primary tw-text-on-primary;
+  }
+
+  .gm-filter-bar {
+    @apply tw-mb-3 tw-flex tw-flex-wrap tw-items-center tw-gap-2;
+  }
+
+  .gm-results-meta {
+    @apply tw-mb-1 tw-flex tw-flex-wrap tw-items-end tw-justify-between tw-gap-2;
+  }
+
+  .gm-meta-line {
+    @apply tw-mb-3 tw-flex tw-flex-wrap tw-items-center tw-gap-x-3 tw-gap-y-1 tw-text-xs tw-text-muted;
+  }
+
+  .gm-results-layout {
+    @apply tw-grid tw-gap-4 lg:tw-grid-cols-[minmax(360px,460px)_minmax(0,1fr)] lg:tw-items-start lg:tw-gap-6;
+  }
+
+  .gm-shop-list {
+    @apply tw-m-0 tw-mb-4 tw-grid tw-list-none tw-gap-3 tw-p-0;
+  }
+
+  .gm-shop-card {
+    @apply tw-grid tw-cursor-pointer tw-items-start tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-3 tw-shadow-card;
+    grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    transition: border-color 0.15s ease;
+  }
+
+  .gm-shop-card:hover {
+    @apply tw-border-primary;
+  }
+
+  .gm-shop-photo {
+    @apply tw-m-0 tw-min-w-0;
+  }
+
+  .gm-shop-photo img {
+    @apply tw-block tw-w-full tw-rounded-xl tw-bg-accent tw-object-cover;
+    aspect-ratio: 1;
+  }
+
+  .gm-shop-photo figcaption {
+    @apply tw-mt-1 tw-text-[0.65rem] tw-leading-tight tw-text-muted;
+  }
+
+  .gm-shop-photo.gm-shop-photo-hero img {
+    @apply tw-rounded-none;
+    aspect-ratio: 16 / 9;
+    max-height: 14rem;
+  }
+
+  .gm-shop-photo-hero figcaption {
+    @apply tw-absolute tw-bottom-2 tw-right-2 tw-m-0 tw-rounded tw-px-2 tw-py-0.5 tw-text-[0.7rem] tw-text-white;
+    background: rgb(0 0 0 / 65%);
+  }
+
+  .gm-shop-body {
+    @apply tw-grid tw-min-w-0 tw-gap-1;
+  }
+
+  .gm-shop-name {
+    @apply tw-m-0 tw-text-base tw-font-extrabold tw-leading-snug;
+  }
+
+  .gm-shop-name-btn {
+    @apply tw-cursor-pointer tw-border-0 tw-bg-transparent tw-p-0 tw-text-left tw-font-extrabold tw-text-ink;
+  }
+
+  .gm-shop-name-btn:hover {
+    @apply tw-text-primary tw-underline;
+  }
+
+  .gm-shop-catch {
+    @apply tw-m-0 tw-text-sm;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .gm-shop-line {
+    @apply tw-m-0 tw-flex tw-items-start tw-gap-1.5 tw-text-xs tw-text-muted;
+  }
+
+  .gm-shop-line > span:last-child {
+    @apply tw-min-w-0;
+  }
+
+  .gm-clamp-1 > span:last-child,
+  .gm-clamp-2 > span:last-child {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .gm-clamp-1 > span:last-child {
+    -webkit-line-clamp: 1;
+  }
+
+  .gm-clamp-2 > span:last-child {
+    -webkit-line-clamp: 2;
+  }
+
+  .gm-shop-line-icon {
+    @apply tw-mt-0.5 tw-w-3.5 tw-shrink-0 tw-text-center;
+  }
+
+  .gm-shop-distance {
+    @apply tw-text-sm tw-font-bold tw-text-primary;
+  }
+
+  .gm-heart-btn {
+    @apply tw-inline-flex tw-h-11 tw-w-11 tw-shrink-0 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-0 tw-bg-transparent tw-text-xl tw-text-heart;
+    margin: -0.5rem -0.5rem 0 0;
+  }
+
+  .gm-heart-btn:hover {
+    @apply tw-bg-accent;
+  }
+
+  /* =========================
+     状態表示
+  ========================= */
+
+  .gm-state {
+    @apply tw-mb-3 tw-flex tw-flex-col tw-items-center tw-gap-2 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-px-4 tw-py-8 tw-text-center;
+  }
+
+  .gm-state-icon {
+    @apply tw-grid tw-h-14 tw-w-14 tw-place-items-center tw-rounded-full tw-bg-accent tw-text-2xl tw-text-primary;
+  }
+
+  .gm-state-error .gm-state-icon {
+    @apply tw-bg-danger-bg tw-text-danger;
+  }
+
+  .gm-state-title {
+    @apply tw-m-0 tw-text-base tw-font-extrabold;
+  }
+
+  .gm-state-actions {
+    @apply tw-mt-2 tw-flex tw-flex-wrap tw-justify-center tw-gap-2;
+  }
+
+  .gm-spinner {
+    @apply tw-inline-block tw-h-10 tw-w-10 tw-rounded-full;
+    border: 4px solid var(--gm-accent);
+    border-top-color: var(--gm-primary);
+    animation: gm-spin 0.9s linear infinite;
+  }
+
+  .gm-spinner-sm {
+    @apply tw-h-5 tw-w-5 tw-shrink-0;
+    border-width: 3px;
+  }
+
+  .gm-progress {
+    @apply tw-h-2 tw-w-full tw-overflow-hidden tw-rounded-full tw-bg-accent;
+  }
+
+  .gm-progress-bar {
+    @apply tw-block tw-h-full tw-rounded-full tw-bg-primary;
+    width: 0;
+    transition: width 0.3s ease;
+  }
+
+  /* =========================
+     アラート
+  ========================= */
+
+  .gm-global-alerts {
+    @apply tw-mx-auto tw-grid tw-gap-2;
+    max-width: 60rem;
+  }
+
+  .gm-global-alerts:has(> :not([hidden])) {
+    @apply tw-mb-4;
+  }
+
+  .gm-alert {
+    @apply tw-flex tw-items-start tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-px-4 tw-py-3 tw-text-sm;
+  }
+
+  .gm-alert > i {
+    @apply tw-mt-0.5 tw-text-lg;
+  }
+
+  .gm-alert-compact {
+    @apply tw-mb-3 tw-items-center;
+  }
+
+  .gm-alert-danger {
+    @apply tw-border-danger tw-bg-danger-bg tw-text-danger;
+  }
+
+  .gm-alert-warning {
+    @apply tw-border-warning tw-bg-warning-bg tw-text-warning;
+  }
+
+  .gm-alert-info {
+    @apply tw-border-info tw-bg-info-bg tw-text-info;
+  }
+
+  /* =========================
+     地図
+  ========================= */
+
+  .gm-map {
+    @apply tw-w-full tw-overflow-hidden tw-rounded-2xl tw-border tw-border-solid tw-border-line;
+    height: clamp(320px, 62vh, 720px);
+    z-index: 0;
+  }
+
+  .gm-map-sm {
+    height: clamp(240px, 40vh, 360px);
+  }
+
+  .gm-map-status {
+    @apply tw-mb-0 tw-mt-2 tw-text-sm tw-font-semibold tw-text-warning;
+  }
+
+  /* =========================
+     モーダル・店舗詳細
+  ========================= */
+
+  .gm-shop-hero {
+    @apply tw-relative tw-shrink-0;
+  }
+
+  .gm-hero-close {
+    @apply tw-absolute tw-right-3 tw-top-3 tw-grid tw-h-11 tw-w-11 tw-cursor-pointer tw-place-items-center tw-rounded-full tw-border-0 tw-text-lg;
+    background: rgb(255 255 255 / 92%);
+    color: #1c1917;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  }
+
+  .gm-shop-modal-title {
+    @apply tw-m-0 tw-text-xl tw-font-extrabold tw-leading-snug;
+  }
+
+  .gm-info-list {
+    @apply tw-m-0 tw-grid tw-list-none tw-gap-2.5 tw-p-0;
+  }
+
+  .gm-info-list li {
+    @apply tw-flex tw-items-start tw-gap-3;
+  }
+
+  .gm-info-icon {
+    @apply tw-mt-1 tw-w-5 tw-shrink-0 tw-text-center tw-text-primary;
+  }
+
+  .gm-info-label {
+    @apply tw-block tw-text-xs tw-font-bold tw-text-muted;
+  }
+
+  .gm-info-value {
+    @apply tw-block tw-text-sm;
+    white-space: pre-line;
+  }
+
+  .gm-feature-grid {
+    @apply tw-mx-0 tw-mb-0 tw-mt-4 tw-grid tw-list-none tw-grid-cols-3 tw-gap-2 tw-p-0 sm:tw-grid-cols-4;
+  }
+
+  .gm-feature {
+    @apply tw-flex tw-flex-col tw-items-center tw-gap-1 tw-rounded-xl tw-border tw-border-solid tw-border-line tw-bg-surface-2 tw-px-1 tw-py-2.5 tw-text-center tw-text-xs tw-font-bold;
+  }
+
+  .gm-feature > i {
+    @apply tw-text-lg;
+    color: var(--gm-icon-green);
+  }
+
+  .gm-detail-dl {
+    @apply tw-m-0 tw-grid tw-gap-x-3 tw-gap-y-2 tw-text-sm;
+    grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  }
+
+  .gm-detail-dl dt {
+    @apply tw-font-bold tw-text-muted;
+  }
+
+  .gm-detail-dl dd {
+    @apply tw-m-0 tw-min-w-0;
+    white-space: pre-line;
+  }
+
+  .gm-shop-actions {
+    @apply tw-grid tw-grid-cols-1 tw-gap-2 sm:tw-grid-cols-2;
+  }
+
+  .gm-shop-actions > * {
+    @apply tw-m-0 tw-w-full;
+  }
+
+  @media (min-width: 640px) {
+    .gm-shop-actions > :first-child:nth-last-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .gm-share-panel {
+    @apply tw-mt-4 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface-2 tw-p-3;
+  }
+
+  .gm-share-list {
+    @apply tw-m-0 tw-grid tw-list-none tw-gap-1 tw-p-0;
+  }
+
+  .gm-share-list button {
+    @apply tw-flex tw-min-h-[52px] tw-w-full tw-cursor-pointer tw-items-center tw-gap-3 tw-rounded-xl tw-border-0 tw-bg-surface tw-px-3 tw-text-left tw-font-bold tw-text-ink;
+  }
+
+  .gm-share-list button:hover {
+    @apply tw-bg-accent;
+  }
+
+  .gm-share-icon {
+    @apply tw-grid tw-h-9 tw-w-9 tw-place-items-center tw-rounded-full tw-bg-accent tw-text-primary;
+  }
+
+  .gm-share-line {
+    background: #06c755;
+    color: #ffffff;
+  }
+
+  .gm-qr-area {
+    @apply tw-mt-3 tw-flex tw-flex-col tw-items-center tw-gap-2 tw-text-center;
+  }
+
+  .gm-qr-area img {
+    @apply tw-rounded-lg tw-bg-white tw-p-2;
+    image-rendering: pixelated;
+  }
+
+  .gm-dialog-footer {
+    @apply tw-grid tw-grid-cols-2 tw-gap-2;
+    justify-content: stretch;
+  }
+
+  .gm-dialog-footer > * {
+    @apply tw-m-0;
+  }
+
+  /* 絞り込み（ボトムシート） */
+  .gm-sheet-handle {
+    @apply tw-mx-auto tw-mt-2 tw-h-1.5 tw-w-12 tw-rounded-full tw-bg-line-strong;
+  }
+
+  .gm-sheet-footer {
+    @apply tw-grid tw-gap-2 tw-border-0 tw-border-t tw-border-solid tw-border-line tw-bg-surface tw-p-4;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .gm-range {
+    @apply tw-mt-2 tw-w-full tw-cursor-pointer;
+    accent-color: var(--gm-primary);
+    min-height: 44px;
+  }
+
+  .gm-range-labels {
+    @apply tw-flex tw-justify-between tw-text-xs tw-text-muted;
+  }
+
+  .gm-toggle-chips {
+    @apply tw-flex tw-flex-wrap tw-gap-2;
+  }
+
+  .gm-toggle-chip {
+    @apply tw-relative tw-cursor-pointer;
+  }
+
+  .gm-toggle-chip input {
+    @apply tw-absolute tw-opacity-0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .gm-toggle-chip span {
+    @apply tw-inline-flex tw-min-h-[40px] tw-items-center tw-gap-1 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-3.5 tw-text-sm tw-font-bold;
+  }
+
+  .gm-toggle-chip input:checked + span {
+    @apply tw-border-primary tw-bg-primary tw-text-on-primary;
+  }
+
+  .gm-toggle-chip input:checked + span::before {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.75em;
+  }
+
+  .gm-toggle-chip input:focus-visible + span {
+    outline: 3px solid var(--gm-focus);
+    outline-offset: 2px;
+  }
+
+  .gm-check-grid {
+    @apply tw-grid tw-grid-cols-1 tw-gap-2 sm:tw-grid-cols-2;
+  }
+
+  .gm-check {
+    @apply tw-flex tw-min-h-[48px] tw-cursor-pointer tw-items-center tw-gap-2.5 tw-rounded-xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-px-3 tw-text-sm tw-font-semibold;
+  }
+
+  .gm-check input {
+    @apply tw-h-5 tw-w-5 tw-shrink-0;
+    accent-color: var(--gm-primary);
+  }
+
+  .gm-check:has(input:checked) {
+    @apply tw-border-primary tw-bg-accent;
+  }
+
+  .gm-check-icon {
+    @apply tw-w-5 tw-text-center tw-text-muted;
+  }
+
+  /* 地点登録 */
+  .gm-method-grid {
+    @apply tw-grid tw-grid-cols-3 tw-gap-2 sm:tw-grid-cols-5;
+  }
+
+  .gm-method-grid label {
+    @apply tw-flex tw-min-h-[64px] tw-cursor-pointer tw-flex-col tw-items-center tw-justify-center tw-gap-1 tw-rounded-xl tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-text-xs tw-font-bold tw-text-ink;
+  }
+
+  .gm-method-grid label > i {
+    @apply tw-text-lg tw-text-primary;
+  }
+
+  .gm-method-grid .btn-check:checked + label {
+    @apply tw-border-primary tw-bg-accent;
+    border-width: 2px;
+  }
+
+  .gm-method-grid .btn-check:focus-visible + label {
+    outline: 3px solid var(--gm-focus);
+    outline-offset: 2px;
+  }
+
+  .gm-method-panel {
+    @apply tw-rounded-2xl tw-bg-surface-2 tw-p-3;
+  }
+
+  .gm-candidate-list {
+    @apply tw-mx-0 tw-mb-2 tw-mt-2 tw-grid tw-list-none tw-gap-2 tw-p-0;
+  }
+
+  .gm-candidate {
+    @apply tw-flex tw-min-h-[52px] tw-w-full tw-cursor-pointer tw-items-start tw-gap-3 tw-rounded-xl tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-3 tw-py-2 tw-text-ink;
+  }
+
+  .gm-candidate[aria-pressed="true"] {
+    @apply tw-border-primary tw-bg-accent;
+    border-width: 2px;
+  }
+
+  .gm-candidate-icon {
+    @apply tw-mt-1 tw-text-primary;
+  }
+
+  /* 初回案内 */
+  .gm-onboarding {
+    @apply tw-px-5 tw-pt-6 tw-text-center;
+  }
+
+  .gm-step h3 {
+    @apply tw-mb-2 tw-text-xl tw-font-extrabold;
+  }
+
+  .gm-step-art {
+    @apply tw-mx-auto tw-mb-4 tw-grid tw-h-28 tw-w-28 tw-place-items-center tw-rounded-full tw-text-5xl tw-text-primary;
+    background: var(--gm-hero-bg);
+  }
+
+  .gm-consent-points {
+    @apply tw-mb-3 tw-grid tw-gap-1.5 tw-pl-5 tw-text-left tw-text-sm;
+  }
+
+  .gm-consent-details {
+    @apply tw-mb-2 tw-rounded-xl tw-border tw-border-solid tw-border-line tw-px-3 tw-text-left;
+  }
+
+  .gm-consent-details summary {
+    @apply tw-flex tw-min-h-[44px] tw-cursor-pointer tw-items-center tw-font-bold tw-text-primary;
+  }
+
+  .gm-consent-details > div {
+    @apply tw-pb-3 tw-text-sm;
+    max-height: 16rem;
+    overflow-y: auto;
+  }
+
+  .gm-step-dots {
+    @apply tw-mx-0 tw-mb-0 tw-mt-5 tw-flex tw-list-none tw-justify-center tw-gap-2 tw-p-0;
+  }
+
+  .gm-step-dots li {
+    @apply tw-h-2.5 tw-w-2.5 tw-rounded-full tw-bg-line-strong;
+  }
+
+  .gm-step-dots li.is-active {
+    @apply tw-w-6 tw-bg-primary;
+  }
+
+  .gm-onboarding-footer {
+    @apply tw-grid tw-grid-cols-1 tw-gap-2 tw-border-0;
+    /* Bootstrap の .modal-footer（justify-content: flex-end）を打ち消す */
+    justify-content: stretch;
+  }
+
+  .gm-onboarding-footer > * {
+    @apply tw-m-0;
+  }
+
+  /* =========================
+     ステータス・その他ページ
+  ========================= */
+
+  .gm-status-badge {
+    @apply tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded-full tw-border tw-border-solid tw-px-3 tw-py-1 tw-text-sm tw-font-bold;
+  }
+
+  .gm-status-badge::before {
+    content: "";
+    @apply tw-inline-block tw-h-2.5 tw-w-2.5 tw-rounded-full;
+    background: currentColor;
+  }
+
+  .gm-status-sm {
+    @apply tw-px-2 tw-py-0.5 tw-text-xs;
+  }
+
+  .gm-status-ok {
+    @apply tw-border-success tw-bg-success-bg tw-text-success;
+  }
+
+  .gm-status-warn,
+  .gm-status-maint {
+    @apply tw-border-warning tw-bg-warning-bg tw-text-warning;
+  }
+
+  .gm-status-error {
+    @apply tw-border-danger tw-bg-danger-bg tw-text-danger;
+  }
+
+  .gm-status-unknown {
+    @apply tw-border-line-strong tw-bg-surface-2 tw-text-muted;
+  }
+
+  .gm-status-list,
+  .gm-notice-list {
+    @apply tw-mx-0 tw-mb-3 tw-mt-0 tw-grid tw-list-none tw-gap-2 tw-p-0;
+  }
+
+  .gm-status-list li {
+    @apply tw-flex tw-flex-wrap tw-items-center tw-justify-between tw-gap-1 tw-rounded-xl tw-bg-surface-2 tw-px-3 tw-py-2;
+  }
+
+  .gm-notice-list li {
+    @apply tw-grid tw-gap-1 tw-border-0 tw-border-b tw-border-solid tw-border-line tw-pb-3;
+  }
+
+  .gm-faq details {
+    @apply tw-border-0 tw-border-b tw-border-solid tw-border-line;
+  }
+
+  .gm-faq details:last-child {
+    border-bottom: 0;
+  }
+
+  .gm-faq summary {
+    @apply tw-flex tw-min-h-[52px] tw-cursor-pointer tw-items-center tw-font-bold;
+  }
+
+  .gm-faq details > :not(summary) {
+    @apply tw-pb-3 tw-text-sm;
+  }
+
+  .gm-prose h2 {
+    @apply tw-mb-2 tw-mt-5 tw-text-base tw-font-extrabold;
+  }
+
+  .gm-prose h3,
+  .gm-prose h4,
+  .gm-prose h5 {
+    @apply tw-mb-1.5 tw-mt-4 tw-text-sm tw-font-extrabold;
+  }
+
+  .gm-prose p,
+  .gm-prose li,
+  .gm-prose dd {
+    @apply tw-text-sm;
+  }
+
+  .gm-prose ul {
+    @apply tw-pl-5;
+  }
+
+  .gm-license-list dt {
+    @apply tw-mt-3 tw-font-bold;
+  }
+
+  .gm-license-list dd {
+    @apply tw-mb-0 tw-text-muted;
+  }
+
+  .gm-kv {
+    @apply tw-grid tw-gap-x-4 tw-gap-y-1;
+    grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  }
+
+  .gm-kv dd {
+    @apply tw-m-0;
+  }
+
+  /* =========================
+     フッター・ナビゲーション
+  ========================= */
+
+  .gm-footer {
+    @apply tw-grid tw-gap-1 tw-px-4 tw-pb-28 tw-pt-6 tw-text-center tw-text-xs tw-text-muted lg:tw-pb-8;
+  }
+
+  .gm-footer a {
+    @apply tw-inline-flex tw-min-h-[32px] tw-items-center tw-text-primary;
+  }
+
+  .gm-bottom-nav {
+    @apply tw-fixed tw-inset-x-0 tw-bottom-0 tw-grid tw-grid-cols-5 tw-border-0 tw-border-t tw-border-solid tw-border-line tw-bg-surface tw-px-1 tw-pt-1;
+    padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+    z-index: 1030;
+  }
+
+  .gm-bottom-nav a {
+    @apply tw-flex tw-min-h-[56px] tw-min-w-0 tw-flex-col tw-items-center tw-justify-center tw-gap-0.5 tw-rounded-xl tw-text-[0.7rem] tw-font-semibold tw-text-muted tw-no-underline;
+  }
+
+  .gm-bottom-nav a > i {
+    @apply tw-text-xl;
+  }
+
+  .gm-bottom-nav a[aria-current="page"] {
+    @apply tw-font-extrabold tw-text-primary;
+  }
+
+  .gm-bottom-nav a[aria-current="page"] > i::before {
+    font-weight: 900;
+  }
+
+  /* =========================
+     トースト・その他
+  ========================= */
+
+  .gm-toast-container {
+    @apply tw-pointer-events-none tw-fixed tw-inset-x-0 tw-grid tw-justify-items-center tw-gap-2 tw-px-4;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    z-index: 1090;
+  }
+
+  .gm-toast {
+    @apply tw-pointer-events-auto tw-w-full tw-max-w-md tw-rounded-2xl tw-border tw-border-solid tw-shadow-lg;
+    background: var(--gm-toast-bg);
+    color: var(--gm-toast-text);
+    border-color: var(--gm-toast-bg);
+  }
+
+  .gm-toast-body {
+    @apply tw-flex tw-items-center tw-gap-3 tw-py-2 tw-pl-4 tw-pr-1 tw-text-sm tw-font-semibold;
+  }
+
+  .gm-toast-body > span {
+    @apply tw-flex-1;
+  }
+
+  .gm-toast-close {
+    @apply tw-grid tw-h-11 tw-w-11 tw-shrink-0 tw-cursor-pointer tw-place-items-center tw-rounded-full tw-border-0 tw-bg-transparent;
+    color: inherit;
+  }
+
+  .gm-toast-success > .gm-toast-body > i {
+    color: var(--gm-toast-success);
+  }
+
+  .gm-toast-info > .gm-toast-body > i {
+    color: var(--gm-toast-info);
+  }
+
+  .gm-toast-warning > .gm-toast-body > i,
+  .gm-toast-danger > .gm-toast-body > i {
+    color: var(--gm-toast-danger);
+  }
+
+  .gm-noscript {
+    @apply tw-fixed tw-inset-x-0 tw-top-0 tw-bg-danger tw-p-4 tw-text-center tw-font-bold tw-text-white;
+    z-index: 5000;
+  }
+
+  .gm-dropdown {
+    @apply tw-rounded-xl tw-py-2;
+    min-width: 14rem;
+  }
+
+  .gm-dropdown .dropdown-item {
+    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-font-semibold;
+  }
+
+  .gm-dropdown-icon {
+    @apply tw-w-5 tw-text-center tw-text-primary;
+  }
+}
+
+@keyframes gm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

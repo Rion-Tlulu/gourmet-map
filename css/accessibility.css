@@ -1,28 +1,28 @@
 /* ========================================
-   01. フォーカス
+   アクセシビリティ（UX-03〜07）
+======================================== */
+
+/* ========================================
+   01. フォーカスの可視化
 ======================================== */
 
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 3px solid var(--gm-focus);
   outline-offset: 3px;
 }
 
 .skip-link {
   position: absolute;
-
   top: 0;
   left: 12px;
-
   z-index: 5000;
-
   min-height: 44px;
-
   padding: 12px 16px;
-
-  color: var(--text);
-
-  background: var(--surface);
-
+  color: var(--gm-text);
+  background: var(--gm-surface);
+  border: 2px solid var(--gm-focus);
+  border-radius: 0 0 12px 12px;
+  font-weight: 700;
   transform: translateY(-200%);
 }
 
@@ -31,38 +31,7 @@
 }
 
 /* ========================================
-   02. ダークモード
-======================================== */
-
-html[data-theme="dark"] {
-  color-scheme: dark;
-
-  --background: #1c1917;
-  --surface: #292524;
-
-  --text: #fff7ed;
-  --muted: #d6d3d1;
-  --border: #a8a29e;
-
-  --primary: #fdba74;
-  --primary-hover: #fed7aa;
-  --on-primary: #1c1917;
-
-  --accent-bg: #443025;
-
-  --success: #86efac;
-  --success-bg: #143d28;
-
-  --danger: #fca5a5;
-  --danger-bg: #451a1a;
-
-  --focus: #93c5fd;
-
-  --shadow: none;
-}
-
-/* ========================================
-   03. 文字サイズ
+   02. 文字サイズ（標準／大／特大）
 ======================================== */
 
 html[data-font-size="normal"] {
@@ -78,55 +47,86 @@ html[data-font-size="extra-large"] {
 }
 
 /* ========================================
-   04. ハイコントラスト
+   03. ハイコントラスト
 ======================================== */
 
 html[data-contrast="high"] {
-  --background: #ffffff;
-  --surface: #ffffff;
+  --gm-bg: #ffffff;
+  --gm-surface: #ffffff;
+  --gm-surface-2: #ffffff;
+  --gm-hero-bg: #ffffff;
 
-  --text: #000000;
-  --muted: #242424;
-  --border: #000000;
+  --gm-text: #000000;
+  --gm-muted: #1f1f1f;
+  --gm-border: #000000;
+  --gm-border-strong: #000000;
 
-  --primary: #9a3412;
-  --on-primary: #ffffff;
+  --gm-primary: #8a2c08;
+  --gm-primary-hover: #5c1d05;
+  --gm-on-primary: #ffffff;
 
-  --accent-bg: #fff4e5;
+  --gm-accent: #fff1e0;
+  --gm-accent-text: #5c1d05;
+
+  --gm-chip-green: #0b3d1f;
+  --gm-chip-green-bg: #ffffff;
+  --gm-chip-green-border: #0b3d1f;
+
+  --gm-shadow: none;
 }
 
 html[data-theme="dark"][data-contrast="high"] {
-  --background: #000000;
-  --surface: #000000;
+  --gm-bg: #000000;
+  --gm-surface: #000000;
+  --gm-surface-2: #000000;
+  --gm-hero-bg: #000000;
 
-  --text: #ffffff;
-  --muted: #ffffff;
-  --border: #ffffff;
+  --gm-text: #ffffff;
+  --gm-muted: #ffffff;
+  --gm-border: #ffffff;
+  --gm-border-strong: #ffffff;
 
-  --primary: #fdba74;
-  --on-primary: #000000;
+  --gm-primary: #ffd2a8;
+  --gm-primary-hover: #ffffff;
+  --gm-on-primary: #000000;
 
-  --accent-bg: #292524;
+  --gm-accent: #1f1f1f;
+  --gm-accent-text: #ffffff;
+
+  --gm-chip-green: #ffffff;
+  --gm-chip-green-bg: #000000;
+  --gm-chip-green-border: #ffffff;
 }
 
-html[data-contrast="high"] button,
-html[data-contrast="high"] input,
-html[data-contrast="high"] select {
+html[data-contrast="high"] .gm-btn,
+html[data-contrast="high"] .gm-input,
+html[data-contrast="high"] .gm-card,
+html[data-contrast="high"] .gm-shop-card,
+html[data-contrast="high"] .gm-chip {
   border-width: 2px;
 }
 
+html[data-contrast="high"] a {
+  text-decoration: underline;
+}
+
 /* ========================================
-   05. 動きの低減
+   04. 動きの低減（アプリ設定・OS設定の両方を尊重）
 ======================================== */
 
 html[data-reduce-motion="true"] *,
 html[data-reduce-motion="true"] *::before,
 html[data-reduce-motion="true"] *::after {
   animation-duration: 0.01ms !important;
-
+  animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
-
   scroll-behavior: auto !important;
+}
+
+html[data-reduce-motion="true"] .gm-spinner {
+  animation: none !important;
+  border-top-color: var(--gm-accent);
+  border-right-color: var(--gm-primary);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -134,27 +134,90 @@ html[data-reduce-motion="true"] *::after {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
-
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-
     scroll-behavior: auto !important;
+  }
+
+  .gm-spinner {
+    animation: none !important;
+    border-right-color: var(--gm-primary);
   }
 }
 
 /* ========================================
-   06. OSハイコントラスト
+   05. OSの強制カラー（Windows ハイコントラスト）
 ======================================== */
 
 @media (forced-colors: active) {
-  button,
-  input,
-  select,
-  .restaurant-card {
+  .gm-btn,
+  .gm-input,
+  .gm-card,
+  .gm-shop-card,
+  .gm-chip,
+  .gm-quick-item,
+  .gm-toggle-chip span,
+  .gm-segment label {
     border: 1px solid ButtonText;
   }
 
   [aria-current="page"],
-  [aria-pressed="true"] {
+  [aria-pressed="true"],
+  .btn-check:checked + label,
+  .gm-toggle-chip input:checked + span {
     outline: 2px solid Highlight;
   }
+
+  .gm-marker {
+    forced-color-adjust: none;
+  }
+}
+
+/* ========================================
+   06. 320px幅でのリフロー
+======================================== */
+
+@media (max-width: 380px) {
+  .gm-main {
+    padding-inline: 0.75rem;
+  }
+
+  .gm-hero-art {
+    display: none;
+  }
+
+  .gm-shop-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gm-shop-photo-card img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .gm-detail-dl,
+  .gm-kv {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gm-detail-dl dd,
+  .gm-kv dd {
+    margin-bottom: 0.5rem;
+  }
+
+  .gm-quick-item {
+    font-size: 0.75rem;
+  }
+
+  .gm-brand-sub {
+    display: none;
+  }
+}
+
+/* 文字を大きくした場合の調整 */
+html[data-font-size="extra-large"] .gm-quick {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+}
+
+html[data-font-size="extra-large"] .gm-bottom-nav a {
+  font-size: 0.6rem;
 }

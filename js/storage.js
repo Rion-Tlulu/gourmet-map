@@ -3,7 +3,7 @@
 
   const C = GM.Config;
 
-  const CONDITION_KEYS = [
+  const CONDITION_KEYS = Object.freeze([
     "lunch",
     "card",
     "parking",
@@ -14,18 +14,49 @@
     "child",
     "freeFood",
     "softDrinkPlan",
-  ];
+  ]);
 
-  const SORT_OPTIONS = ["distanceAsc", "distanceDesc", "nameAsc", "nameDesc"];
+  const SORT_OPTIONS = Object.freeze([
+    "distanceAsc",
+    "distanceDesc",
+    "nameAsc",
+    "nameDesc",
+  ]);
+
+  // geocoding は旧版データとの互換用（住所検索として扱う）
+  const LOCATION_SOURCES = Object.freeze([
+    "address",
+    "station",
+    "gps",
+    "map",
+    "manual",
+    "geocoding",
+  ]);
+
+  const BACKUP_APP_ID = "gourmet-map";
 
   /* ====================================
-       01. 初期値
+       01. エラー
+    ==================================== */
+
+  function storageError(code = "ERR_STORAGE") {
+    return new Error(code);
+  }
+
+  function ensure(condition, code) {
+    if (!condition) {
+      throw storageError(code);
+    }
+  }
+
+  /* ====================================
+       02. 初期値
     ==================================== */
 
   function defaultFilters() {
     return {
       keyword: "",
-      radiusM: 3000,
+      radiusM: C.MAX_RADIUS_M,
       genreNames: null,
       conditions: [],
       sort: "distanceAsc",
@@ -33,20 +64,22 @@
     };
   }
 
+  function defaultSettings() {
+    return {
+      activeLocationId: null,
+      theme: "system",
+      fontSize: "normal",
+      contrast: false,
+      reduceMotion: false,
+      autoRefreshEnabled: true,
+      interval: C.DEFAULT_REFRESH_MINUTES,
+    };
+  }
+
   function defaultData() {
     return {
       schemaVersion: C.SCHEMA_VERSION,
-
-      appSettings: {
-        activeLocationId: null,
-        theme: "system",
-        fontSize: "normal",
-        contrast: false,
-        reduceMotion: false,
-        autoRefreshEnabled: true,
-        interval: 60,
-      },
-
+      appSettings: defaultSettings(),
       locations: [],
       favorites: [],
       presets: [],
@@ -56,14 +89,8 @@
   }
 
   /* ====================================
-       02. 入力検証
+       03. 入力検証
     ==================================== */
-
-  function ensure(condition) {
-    if (!condition) {
-      throw new Error("ERR_STORAGE");
-    }
-  }
 
   function validString(value, max) {
     return typeof value === "string" && value.length <= max;
@@ -77,15 +104,35 @@
     return typeof value === "string" && Number.isFinite(Date.parse(value));
   }
 
+  function validShopId(value) {
+    return typeof value === "string" && /^J[0-9]{9}$/.test(value);
+  }
+
+  /**
+   * 座標の検証（LOC-04）
+   * null：正常
+   * ERR_COORD_RANGE：緯度±90・経度±180の範囲外、または数値でない
+   * ERR_COORD_AREA：対象地域（日本周辺）の範囲外
+   */
+  function coordinateError(lat, lng) {
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    ) {
+      return "ERR_COORD_RANGE";
+    }
+
+    if (lat < 20 || lat > 46 || lng < 122 || lng > 154) {
+      return "ERR_COORD_AREA";
+    }
+
+    return null;
+  }
+
   function validCoordinates(lat, lng) {
-    return (
-      Number.isFinite(lat) &&
-      Number.isFinite(lng) &&
-      lat >= 20 &&
-      lat <= 46 &&
-      lng >= 122 &&
-      lng <= 154
-    );
+    return coordinateError(lat, lng) === null;
   }
 
   function cleanFilters(input) {
@@ -98,6 +145,7 @@
     ensure(
       input.genreNames === null ||
         (Array.isArray(input.genreNames) &&
+          input.genreNames.length <= 200 &&
           input.genreNames.every((value) => validString(value, 100))),
     );
 
@@ -126,11 +174,44 @@
   }
 
   /* ====================================
-       03. 保存データ全体の検証
+       04. データ形式の移行（DATA-05）
     ==================================== */
 
-  function validateData(input) {
-    ensure(input && typeof input === "object");
+  // 旧バージョン → 次のバージョンへの変換を登録する
+  // 例：MIGRATIONS[1] = (data) => ({ ...data, schemaVersion: 2 })
+  const MIGRATIONS = Object.freeze({});
+
+  function migrate(input) {
+    ensure(input && typeof input === "object" && !Array.isArray(input));
+
+    let data = input;
+
+    let version = data.schemaVersion;
+
+    ensure(Number.isInteger(version) && version >= 1);
+
+    // 未対応の新しい形式は拒否
+    ensure(version <= C.SCHEMA_VERSION, "ERR_STORAGE_VERSION");
+
+    while (version < C.SCHEMA_VERSION) {
+      const step = MIGRATIONS[version];
+
+      ensure(typeof step === "function", "ERR_STORAGE_VERSION");
+
+      data = step(data);
+
+      version = data.schemaVersion;
+    }
+
+    return data;
+  }
+
+  /* ====================================
+       05. 保存データ全体の検証（許可リスト方式）
+    ==================================== */
+
+  function validateData(raw) {
+    const input = migrate(raw);
 
     ensure(input.schemaVersion === C.SCHEMA_VERSION);
 
@@ -149,7 +230,7 @@
 
       ensure(validString(item.address || "", 500));
 
-      ensure(["manual", "gps", "geocoding", "map"].includes(item.source));
+      ensure(LOCATION_SOURCES.includes(item.source));
 
       ensure(validString(item.attribution || "", 500));
 
@@ -223,11 +304,10 @@
         output.presets.length,
     );
 
+    // お気に入りIDは規約確認後（機能有効時）のみ保持する
     if (C.FAVORITES_ENABLED) {
       output.favorites = input.favorites.map((item) => {
-        ensure(
-          item && /^J[0-9]{9}$/.test(item.shopId) && validDate(item.createdAt),
-        );
+        ensure(item && validShopId(item.shopId) && validDate(item.createdAt));
 
         return {
           shopId: item.shopId,
@@ -253,7 +333,7 @@
       output.lastFilters[id] = cleanFilters(filters);
     }
 
-    if (input.consent !== null && input.consent) {
+    if (input.consent) {
       ensure(validString(input.consent.termsVersion, 30));
 
       ensure(validString(input.consent.privacyVersion, 30));
@@ -271,46 +351,128 @@
   }
 
   /* ====================================
-       04. 保存・読み込み
+       06. 保存・読み込み
     ==================================== */
 
+  let cachedRaw = null;
+  let cachedData = null;
+
+  function clone(value) {
+    return typeof structuredClone === "function"
+      ? structuredClone(value)
+      : JSON.parse(JSON.stringify(value));
+  }
+
+  function storage() {
+    try {
+      return window.localStorage;
+    } catch {
+      throw storageError("ERR_STORAGE_UNAVAILABLE");
+    }
+  }
+
+  function isAvailable() {
+    try {
+      const store = storage();
+
+      const key = C.STORAGE_KEY + ":test";
+
+      store.setItem(key, "1");
+      store.removeItem(key);
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function load() {
-    const raw = localStorage.getItem(C.STORAGE_KEY);
+    let raw;
+
+    try {
+      raw = storage().getItem(C.STORAGE_KEY);
+    } catch {
+      throw storageError("ERR_STORAGE_UNAVAILABLE");
+    }
 
     if (!raw) {
       return defaultData();
     }
 
-    return validateData(JSON.parse(raw));
+    if (raw !== cachedRaw) {
+      let parsed;
+
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        throw storageError();
+      }
+
+      cachedData = validateData(parsed);
+      cachedRaw = raw;
+    }
+
+    return clone(cachedData);
   }
 
   function save(data) {
     const validated = validateData(data);
 
-    localStorage.setItem(C.STORAGE_KEY, JSON.stringify(validated));
+    const raw = JSON.stringify(validated);
 
-    return validated;
+    try {
+      storage().setItem(C.STORAGE_KEY, raw);
+    } catch (error) {
+      if (error?.message?.startsWith("ERR_")) throw error;
+
+      // QuotaExceededError など
+      throw storageError("ERR_STORAGE_FULL");
+    }
+
+    cachedRaw = raw;
+    cachedData = validated;
+
+    return clone(validated);
   }
 
   function getStorageSize() {
-    return new Blob([localStorage.getItem(C.STORAGE_KEY) || ""]).size;
+    try {
+      const raw = storage().getItem(C.STORAGE_KEY) || "";
+
+      // LocalStorageは概ねUTF-16で保持されるため2バイト換算の概算
+      return (raw.length + C.STORAGE_KEY.length) * 2;
+    } catch {
+      return 0;
+    }
   }
 
+  // アプリ専用キーのみ削除（同一オリジンの他データは消さない）
   function clear() {
-    localStorage.removeItem(C.STORAGE_KEY);
+    cachedRaw = null;
+    cachedData = null;
+
+    try {
+      storage().removeItem(C.STORAGE_KEY);
+    } catch {
+      throw storageError("ERR_STORAGE_UNAVAILABLE");
+    }
   }
 
   /* ====================================
-       05. 利用規約
+       07. 利用規約
     ==================================== */
 
   function hasConsent() {
-    const consent = load().consent;
+    try {
+      const consent = load().consent;
 
-    return (
-      consent?.termsVersion === C.TERMS_VERSION &&
-      consent?.privacyVersion === C.PRIVACY_VERSION
-    );
+      return (
+        consent?.termsVersion === C.TERMS_VERSION &&
+        consent?.privacyVersion === C.PRIVACY_VERSION
+      );
+    } catch {
+      return false;
+    }
   }
 
   function acceptConsent() {
@@ -326,8 +488,12 @@
   }
 
   /* ====================================
-       06. 地点管理
+       08. 地点管理
     ==================================== */
+
+  function getLocations() {
+    return load().locations;
+  }
 
   function getActiveLocation() {
     const data = load();
@@ -344,32 +510,41 @@
 
     const existing = data.locations.find((item) => item.id === input.id);
 
+    const label = String(input.label ?? "").trim();
+
+    ensure(label.length > 0 && label.length <= 80, "ERR_INPUT");
+
+    const coordError = coordinateError(input.lat, input.lng);
+
+    ensure(!coordError, coordError || "ERR_INPUT");
+
     const now = new Date().toISOString();
 
     const location = {
       id: existing?.id || crypto.randomUUID(),
-
-      label: input.label.trim(),
-
+      label,
       lat: input.lat,
       lng: input.lng,
-
-      address: input.address || "",
-
-      source: input.source || "manual",
-
-      attribution: input.attribution || "",
-
+      address: String(input.address || "").slice(0, 500),
+      source: LOCATION_SOURCES.includes(input.source) ? input.source : "manual",
+      attribution: String(input.attribution || "").slice(0, 500),
       createdAt: existing?.createdAt || now,
-
       updatedAt: now,
     };
 
-    data.locations = data.locations.filter((item) => item.id !== location.id);
+    if (existing) {
+      // 並び順を維持して置き換え
+      data.locations = data.locations.map((item) =>
+        item.id === location.id ? location : item,
+      );
+    } else {
+      data.locations.push(location);
+    }
 
-    data.locations.push(location);
-
-    data.appSettings.activeLocationId = location.id;
+    // 新規登録時、または未選択時のみ選択中の地点にする
+    if (!existing || !data.appSettings.activeLocationId) {
+      data.appSettings.activeLocationId = location.id;
+    }
 
     save(data);
 
@@ -379,13 +554,23 @@
   function selectLocation(id) {
     const data = load();
 
-    ensure(data.locations.some((item) => item.id === id));
+    ensure(data.locations.some((item) => item.id === id), "ERR_INPUT");
 
     data.appSettings.activeLocationId = id;
 
     save(data);
   }
 
+  function countLocationRelations(id) {
+    const data = load();
+
+    return {
+      presets: data.presets.filter((item) => item.locationId === id).length,
+      hasLastFilters: Object.hasOwn(data.lastFilters, id),
+    };
+  }
+
+  // 地点削除時は関連する条件・プリセットも削除（LOC-08）
   function deleteLocation(id) {
     const data = load();
 
@@ -403,7 +588,7 @@
   }
 
   /* ====================================
-       07. 検索条件
+       09. 検索条件
     ==================================== */
 
   function saveFilters(locationId, filters) {
@@ -421,24 +606,38 @@
   }
 
   /* ====================================
-       08. プリセット
+       10. プリセット
     ==================================== */
+
+  function getPresets(locationId) {
+    return load().presets.filter((item) => item.locationId === locationId);
+  }
 
   function savePreset(locationId, name, filters, presetId) {
     const data = load();
 
+    const trimmed = String(name ?? "").trim();
+
+    ensure(trimmed.length > 0 && trimmed.length <= 80, "ERR_INPUT");
+
+    ensure(data.locations.some((item) => item.id === locationId), "ERR_INPUT");
+
     const preset = {
       presetId: presetId || crypto.randomUUID(),
       locationId,
-      name: name.trim(),
+      name: trimmed,
       filters: cleanFilters(filters),
     };
 
-    data.presets = data.presets.filter(
-      (item) => item.presetId !== preset.presetId,
+    const index = data.presets.findIndex(
+      (item) => item.presetId === preset.presetId,
     );
 
-    data.presets.push(preset);
+    if (index >= 0) {
+      data.presets[index] = preset;
+    } else {
+      data.presets.push(preset);
+    }
 
     save(data);
 
@@ -454,17 +653,23 @@
   }
 
   /* ====================================
-       09. お気に入り
+       11. お気に入り
     ==================================== */
 
   function getFavoriteIds() {
     if (!C.FAVORITES_ENABLED) return [];
 
-    return load().favorites.map((item) => item.shopId);
+    try {
+      return load().favorites.map((item) => item.shopId);
+    } catch {
+      return [];
+    }
   }
 
   function toggleFavorite(shopId) {
-    ensure(C.FAVORITES_ENABLED);
+    ensure(C.FAVORITES_ENABLED, "ERR_DISABLED");
+
+    ensure(validShopId(shopId), "ERR_INPUT");
 
     const data = load();
 
@@ -485,7 +690,7 @@
   }
 
   /* ====================================
-       10. 設定
+       12. 設定・項目別初期化（DATA-02）
     ==================================== */
 
   function updateSettings(patch) {
@@ -499,26 +704,85 @@
     return save(data).appSettings;
   }
 
-  /* ====================================
-       11. バックアップ
-    ==================================== */
+  function resetAppearance() {
+    const defaults = defaultSettings();
 
-  function exportBackup() {
+    return updateSettings({
+      theme: defaults.theme,
+      fontSize: defaults.fontSize,
+      contrast: defaults.contrast,
+      reduceMotion: defaults.reduceMotion,
+    });
+  }
+
+  function resetSettings() {
     const data = load();
 
-    // 同意情報は移行しない
-    data.consent = null;
+    data.appSettings = {
+      ...defaultSettings(),
+      activeLocationId: data.appSettings.activeLocationId,
+    };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
+    return save(data).appSettings;
+  }
+
+  function clearLastFilters() {
+    const data = load();
+
+    data.lastFilters = {};
+
+    save(data);
+  }
+
+  function clearPresets() {
+    const data = load();
+
+    data.presets = [];
+
+    save(data);
+  }
+
+  function clearFavorites() {
+    const data = load();
+
+    data.favorites = [];
+
+    save(data);
+  }
+
+  /* ====================================
+       13. バックアップ（DATA-03／DATA-04）
+    ==================================== */
+
+  function createBackup() {
+    const data = load();
+
+    // 同意情報は端末ごとに取得するため移行しない
+    // 店舗データ・画像・APIキー・内部ログは保存していないため含まれない
+    return {
+      app: BACKUP_APP_ID,
+      exportedAt: new Date().toISOString(),
+      appVersion: C.APP_VERSION,
+      ...data,
+      consent: null,
+    };
+  }
+
+  function exportBackup() {
+    const backup = createBackup();
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: "application/json",
     });
 
     const url = URL.createObjectURL(blob);
 
+    const stamp = backup.exportedAt.slice(0, 10).replaceAll("-", "");
+
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "gourmet-map-backup.json";
+    link.download = `gourmet-map-backup-${stamp}.json`;
 
     document.body.append(link);
     link.click();
@@ -529,91 +793,189 @@
     }, 1000);
   }
 
-  async function importBackup(file, mode = "replace") {
-    if (!file || file.size > C.MAX_BACKUP_BYTES) {
-      throw new Error("ERR_STORAGE");
+  function sameLocation(a, b) {
+    return a.label === b.label && a.lat === b.lat && a.lng === b.lng;
+  }
+
+  /**
+   * バックアップの検証と取り込み
+   * 失敗時は例外を投げ、既存データは変更しない。
+   */
+  function parseBackup(text) {
+    let parsed;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw storageError("ERR_BACKUP_FORMAT");
     }
 
-    const input = validateData(JSON.parse(await file.text()));
+    ensure(
+      parsed && typeof parsed === "object" && !Array.isArray(parsed),
+      "ERR_BACKUP_FORMAT",
+    );
 
+    if (parsed.app !== undefined) {
+      ensure(parsed.app === BACKUP_APP_ID, "ERR_BACKUP_FORMAT");
+    }
+
+    try {
+      return validateData(parsed);
+    } catch (error) {
+      if (error.message === "ERR_STORAGE_VERSION") throw error;
+
+      throw storageError("ERR_BACKUP_FORMAT");
+    }
+  }
+
+  async function importBackup(file, mode = "replace") {
+    ensure(file, "ERR_INPUT");
+
+    ensure(file.size <= C.MAX_BACKUP_BYTES, "ERR_BACKUP_SIZE");
+
+    ensure(["replace", "merge"].includes(mode), "ERR_INPUT");
+
+    const input = parseBackup(await file.text());
+
+    return applyBackup(input, mode);
+  }
+
+  function applyBackup(input, mode) {
     const current = load();
 
+    // 同意情報は現在の端末のものを維持
     input.consent = current.consent;
 
     if (mode === "replace") {
-      return save(input);
+      save(input);
+
+      return {
+        mode,
+        locations: input.locations.length,
+        presets: input.presets.length,
+        favorites: input.favorites.length,
+        duplicates: 0,
+      };
     }
 
-    if (mode !== "merge") {
-      throw new Error("ERR_INPUT");
-    }
+    let duplicates = 0;
 
-    const locationMap = new Map(
-      current.locations.map((item) => [item.id, item]),
-    );
+    const locations = [...current.locations];
+
+    // 取り込み元ID → 実際に使うID（同一地点は既存側に寄せる）
+    const idMap = new Map();
+
+    let addedLocations = 0;
 
     for (const item of input.locations) {
-      if (!locationMap.has(item.id)) {
-        locationMap.set(item.id, item);
+      const sameId = locations.find((existing) => existing.id === item.id);
+
+      const sameContent = locations.find((existing) =>
+        sameLocation(existing, item),
+      );
+
+      if (sameId || sameContent) {
+        duplicates++;
+
+        idMap.set(item.id, (sameId || sameContent).id);
+
+        continue;
       }
+
+      locations.push(item);
+
+      idMap.set(item.id, item.id);
+
+      addedLocations++;
     }
 
-    const presetMap = new Map(
-      current.presets.map((item) => [item.presetId, item]),
-    );
+    const presets = [...current.presets];
+
+    let addedPresets = 0;
 
     for (const item of input.presets) {
-      if (!presetMap.has(item.presetId)) {
-        presetMap.set(item.presetId, item);
+      if (presets.some((existing) => existing.presetId === item.presetId)) {
+        duplicates++;
+        continue;
       }
+
+      presets.push({
+        ...item,
+        locationId: idMap.get(item.locationId) || item.locationId,
+      });
+
+      addedPresets++;
     }
 
-    const favoriteMap = new Map(
-      current.favorites.map((item) => [item.shopId, item]),
-    );
+    const favorites = [...current.favorites];
+
+    let addedFavorites = 0;
 
     for (const item of input.favorites) {
-      if (!favoriteMap.has(item.shopId)) {
-        favoriteMap.set(item.shopId, item);
+      if (favorites.some((existing) => existing.shopId === item.shopId)) {
+        duplicates++;
+        continue;
+      }
+
+      favorites.push(item);
+
+      addedFavorites++;
+    }
+
+    const lastFilters = { ...current.lastFilters };
+
+    for (const [id, filters] of Object.entries(input.lastFilters)) {
+      const mapped = idMap.get(id) || id;
+
+      // 重複時は既存の条件を優先
+      if (!Object.hasOwn(lastFilters, mapped)) {
+        lastFilters[mapped] = filters;
       }
     }
 
-    return save({
+    save({
       ...current,
-
-      locations: [...locationMap.values()],
-
-      presets: [...presetMap.values()],
-
-      favorites: [...favoriteMap.values()],
-
-      // 重複時は既存の条件を優先
-      lastFilters: {
-        ...input.lastFilters,
-        ...current.lastFilters,
-      },
-
+      locations,
+      presets,
+      favorites,
+      lastFilters,
       appSettings: {
         ...current.appSettings,
-
         activeLocationId:
           current.appSettings.activeLocationId ||
-          input.appSettings.activeLocationId ||
+          idMap.get(input.appSettings.activeLocationId) ||
+          locations[0]?.id ||
           null,
       },
     });
+
+    return {
+      mode,
+      locations: addedLocations,
+      presets: addedPresets,
+      favorites: addedFavorites,
+      duplicates,
+    };
   }
 
   /* ====================================
-       12. 外部公開する関数
+       14. 外部公開する関数
     ==================================== */
 
   GM.Storage = Object.freeze({
+    CONDITION_KEYS,
+    SORT_OPTIONS,
+
     defaultData,
     defaultFilters,
+    defaultSettings,
     validateData,
+    cleanFilters,
     validCoordinates,
+    coordinateError,
+    validShopId,
 
+    isAvailable,
     load,
     save,
     clear,
@@ -622,14 +984,17 @@
     hasConsent,
     acceptConsent,
 
+    getLocations,
     getActiveLocation,
     saveLocation,
     selectLocation,
+    countLocationRelations,
     deleteLocation,
 
     saveFilters,
     getFilters,
 
+    getPresets,
     savePreset,
     deletePreset,
 
@@ -637,8 +1002,16 @@
     toggleFavorite,
 
     updateSettings,
+    resetAppearance,
+    resetSettings,
+    clearLastFilters,
+    clearPresets,
+    clearFavorites,
 
+    createBackup,
     exportBackup,
+    parseBackup,
+    applyBackup,
     importBackup,
   });
 })(window.GourmetMap);

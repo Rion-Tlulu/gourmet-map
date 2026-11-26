@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Unit / GAS tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: |
+          for file in js/*.js test/*.js; do node --check "$file"; done
+          cat gas/Code.gs gas/Operations.gs > /tmp/gas-check.js
+          node --check /tmp/gas-check.js
+
+      - name: Run tests
+        run: node --test "test/*.test.js"
+
+  tailwind:
+    name: Tailwind CSS is up to date
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Tailwind standalone CLI (v3.4.17)
+        run: |
+          curl -sSL -o tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
+          chmod +x tailwindcss
+
+      - name: Build and compare
+        run: |
+          ./tailwindcss -c tailwind.config.js -i tailwind/input.css -o /tmp/tailwind.css --minify
+          diff -q /tmp/tailwind.css css/tailwind.css || (echo "css/tailwind.css を再生成してください" && exit 1)

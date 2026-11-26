@@ -6,6 +6,12 @@ secrets.json
 .clasprc.json
 .clasp.json
 
+# ツール（Tailwind スタンドアロンCLI など）
+tools/
+tailwindcss
+tailwindcss-*
+tailwindcss*.exe
+
 # ログ
 *.log
 

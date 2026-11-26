@@ -1,66 +1,115 @@
 <!doctype html>
-<html lang="ja" data-theme="light">
+<html lang="ja" data-theme="light" data-bs-theme="light">
   <head>
     <meta charset="UTF-8" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-
     <meta
       name="description"
-      content="登録地点から半径3km以内のお店を探せるグルメマップ。"
+      content="登録した地点から半径3km以内のお店を探せる、ログイン不要のグルメマップ。"
     />
-
     <meta name="theme-color" content="#c2410c" />
 
+    <!--
+      GitHub Pages では任意のHTTPヘッダーを設定できないため meta でCSPを指定（SEC-04）。
+      frame-ancestors 等の meta で無効な指定は記載しない。
+    -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
-            default-src 'self';
-            script-src 'self' https://cdn.jsdelivr.net;
-            style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
-            img-src 'self' data: https://tile.openstreetmap.org https://*.hotpepper.jp https://*.hotp.jp https://cdn.jsdelivr.net;
-            connect-src 'self' https://script.google.com https://script.googleusercontent.com;
-            object-src 'none';
-            base-uri 'self';
-            form-action 'self';
-          "
+        default-src 'self';
+        script-src 'self' https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com;
+        font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com;
+        img-src 'self' data: blob: https://tile.openstreetmap.org https://*.hotp.jp https://*.hotpepper.jp https://cdn.jsdelivr.net;
+        connect-src 'self' https://script.google.com https://script.googleusercontent.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        upgrade-insecure-requests;
+      "
     />
 
     <title>グルメマップ | Gourmet Map</title>
+
+    <link rel="icon" href="./assets/images/favicon.svg" type="image/svg+xml" />
+
+    <!-- 表示設定を描画前に反映（同期読み込み） -->
+    <script src="./js/boot.js"></script>
+
+    <!-- Bootstrap（モーダル・オフキャンバス・ドロップダウン・トースト） -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
 
     <!-- Leaflet -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous"
     />
-
-    <!-- MarkerCluster -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+      integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV"
+      crossorigin="anonymous"
     />
-
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+      integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+"
+      crossorigin="anonymous"
     />
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="./css/style.css" />
+    <!-- Font Awesome Free -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css"
+      integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a"
+      crossorigin="anonymous"
+    />
 
+    <!-- Google Fonts（Noto Sans JP・Inter） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap"
+    />
+
+    <!-- アプリCSS（Tailwind事前生成 → 補助CSS → アクセシビリティ） -->
+    <link rel="stylesheet" href="./css/tailwind.css" />
+    <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/accessibility.css" />
 
-    <!-- 外部ライブラリ -->
+    <!-- 外部ライブラリ（版固定・SRI） -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+      crossorigin="anonymous"
     ></script>
-
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+      integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"
+      integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"
+      crossorigin="anonymous"
     ></script>
 
     <!-- アプリ -->
@@ -69,710 +118,1171 @@
     <script defer src="./js/api.js"></script>
     <script defer src="./js/search.js"></script>
     <script defer src="./js/map.js"></script>
+    <script defer src="./js/ui.js"></script>
     <script defer src="./js/app.js"></script>
   </head>
 
   <body>
-    <a class="skip-link" href="#main-content"> メインコンテンツへ移動 </a>
+    <a class="skip-link" href="#main-content">メインコンテンツへ移動</a>
 
-    <!-- ヘッダー -->
-
-    <header class="app-header">
-      <div class="header-inner">
-        <a class="brand" href="#home">
-          <span class="brand-icon" aria-hidden="true">🍴</span>
-
-          <span>
-            グルメマップ
-            <small>Gourmet Map</small>
+    <!-- =====================================
+         ヘッダー
+    ====================================== -->
+    <header class="gm-header">
+      <div class="gm-header-inner">
+        <a class="gm-brand" href="#home" aria-label="グルメマップ ホームへ">
+          <span class="gm-brand-icon" aria-hidden="true">
+            <i class="fa-solid fa-utensils"></i>
+          </span>
+          <span class="tw-flex tw-flex-col tw-leading-tight">
+            <span class="gm-brand-title">グルメマップ</span>
+            <span class="gm-brand-sub">Gourmet Map</span>
           </span>
         </a>
 
-        <div class="header-actions">
-          <button
-            type="button"
-            class="icon-button"
-            data-page="favorites"
-            aria-label="お気に入り"
-          >
-            ♡
-          </button>
+        <!-- PC用ナビゲーション（1024px以上） -->
+        <nav class="gm-desktop-nav" aria-label="メインメニュー">
+          <a href="#results" data-nav="results">
+            <i class="fa-solid fa-store" aria-hidden="true"></i>お店を探す
+          </a>
+          <a href="#favorites" data-nav="favorites">
+            <i class="fa-regular fa-heart" aria-hidden="true"></i>お気に入り
+          </a>
+          <a href="#presets" data-nav="presets">
+            <i class="fa-regular fa-star" aria-hidden="true"></i>プリセット
+          </a>
+          <a href="#settings" data-nav="settings">
+            <i class="fa-solid fa-gear" aria-hidden="true"></i>設定
+          </a>
+        </nav>
 
-          <button
-            type="button"
-            class="icon-button"
-            data-page="settings"
-            aria-label="設定"
-          >
-            ⚙
-          </button>
+        <div class="gm-header-actions">
+          <div class="dropdown tw-hidden md:tw-block">
+            <button
+              type="button"
+              class="gm-location-pill dropdown-toggle"
+              id="header-location-button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+              <span class="visually-hidden">検索地点：</span>
+              <span id="header-location-label">地点未登録</span>
+              <span class="tw-text-xs tw-text-muted">（半径3km）</span>
+            </button>
+            <ul
+              class="dropdown-menu dropdown-menu-end gm-dropdown"
+              id="header-location-menu"
+              aria-labelledby="header-location-button"
+            ></ul>
+          </div>
+
+          <a class="gm-icon-btn lg:tw-hidden" href="#favorites" aria-label="お気に入り">
+            <i class="fa-regular fa-heart" aria-hidden="true"></i>
+          </a>
+          <a class="gm-icon-btn lg:tw-hidden" href="#settings" aria-label="設定">
+            <i class="fa-solid fa-gear" aria-hidden="true"></i>
+          </a>
         </div>
       </div>
     </header>
 
-    <main id="main-content" tabindex="-1">
-      <!-- 共通メッセージ -->
-
-      <div
-        id="app-status"
-        class="status-message"
-        role="status"
-        aria-live="polite"
-        hidden
-      ></div>
-
-      <div id="app-error" class="error-message" role="alert" hidden></div>
-
-      <!-- =================================
-             01. ホーム
-        ================================== -->
-
-      <section id="page-home" class="page">
-        <div class="hero">
+    <main id="main-content" class="gm-main" tabindex="-1">
+      <!-- 共通の状態表示 -->
+      <div class="gm-global-alerts">
+        <div id="offline-banner" class="gm-alert gm-alert-warning" role="status" hidden>
+          <i class="fa-solid fa-wifi" aria-hidden="true"></i>
           <div>
-            <p class="eyebrow">あなたの近くに、おいしい発見。</p>
-
-            <h1>
-              いつもの場所の<br />
-              おいしいお店を<br />
-              見つけよう
-            </h1>
-
-            <p>登録した場所から半径3km以内の お店を探してみましょう。</p>
+            <strong>オフラインです</strong>
+            <p class="tw-m-0">インターネット接続を確認してください。接続が回復すると自動で再取得します。（ERR_OFFLINE）</p>
           </div>
-
-          <div class="hero-art" aria-hidden="true">🏡</div>
         </div>
 
-        <form id="search-form" class="panel">
-          <label for="location-select"> 探す場所を選ぶ </label>
+        <div id="maintenance-banner" class="gm-alert gm-alert-info" role="status" hidden>
+          <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i>
+          <div>
+            <strong>メンテナンスのお知らせ</strong>
+            <p class="tw-m-0" id="maintenance-text"></p>
+          </div>
+        </div>
 
-          <select id="location-select"></select>
+        <div id="storage-banner" class="gm-alert gm-alert-warning" role="status" hidden>
+          <i class="fa-solid fa-database" aria-hidden="true"></i>
+          <div>
+            <strong>端末にデータを保存できません</strong>
+            <p class="tw-m-0">
+              ブラウザの設定（プライベートモード・保存の無効化など）により、登録地点や設定を保存できません。（ERR_STORAGE）
+            </p>
+          </div>
+        </div>
 
-          <button type="button" class="secondary-button" data-page="locations">
-            登録地点の管理
+        <div id="app-error" class="gm-alert gm-alert-danger" role="alert" hidden>
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          <div class="tw-flex-1">
+            <p class="tw-m-0" id="app-error-text"></p>
+            <div class="tw-mt-2 tw-flex tw-flex-wrap tw-gap-2" id="app-error-actions"></div>
+          </div>
+          <button type="button" class="gm-icon-btn gm-icon-btn-sm" id="app-error-close" aria-label="エラー表示を閉じる">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
+        </div>
+      </div>
 
-          <label for="keyword"> 店名・キーワード </label>
+      <div id="sr-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 
-          <input
-            type="search"
-            id="keyword"
-            maxlength="150"
-            placeholder="例：カフェ、ランチ"
-          />
+      <!-- =================================
+           SCR-02 ホーム・店舗検索
+      ================================== -->
+      <section id="page-home" class="gm-page" aria-labelledby="home-title">
+        <div class="gm-hero">
+          <div class="tw-flex-1 tw-min-w-0">
+            <p class="gm-eyebrow">あなたの近くに、おいしい発見。</p>
+            <h1 id="home-title" class="gm-hero-title">
+              いつもの場所の<br />おいしいお店を<br />見つけよう
+            </h1>
+          </div>
 
-          <fieldset class="quick-filter">
-            <legend>よく使う検索条件</legend>
+          <div class="gm-hero-art" aria-hidden="true">
+            <svg viewBox="0 0 220 170" focusable="false">
+              <ellipse cx="110" cy="158" rx="104" ry="10" fill="#fde3c8" />
+              <rect x="22" y="100" width="8" height="56" rx="3" fill="#8b5e3c" />
+              <circle cx="26" cy="86" r="24" fill="#7cb342" />
+              <circle cx="12" cy="104" r="13" fill="#8bc34a" />
+              <rect x="191" y="108" width="7" height="48" rx="3" fill="#8b5e3c" />
+              <circle cx="194" cy="98" r="19" fill="#7cb342" />
+              <rect x="50" y="64" width="120" height="92" rx="6" fill="#fff6ec" stroke="#c2410c" stroke-width="3" />
+              <rect x="66" y="38" width="88" height="24" rx="6" fill="#c2410c" />
+              <text x="110" y="54" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff" font-family="Inter, sans-serif" letter-spacing="1">RESTAURANT</text>
+              <path d="M44 68h132l-6 20H50z" fill="#f97316" />
+              <path d="M62 68h12l-2 20h-12zM86 68h12l-1 20H86zM110 68h12v20h-11zM134 68h12l2 20h-12zM158 68h12l3 20h-12z" fill="#ffffff" opacity="0.9" />
+              <path d="M50 88q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 8 0" fill="#f97316" />
+              <rect x="62" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
+              <rect x="128" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
+              <rect x="97" y="104" width="26" height="52" rx="3" fill="#c2410c" />
+              <circle cx="117" cy="131" r="2" fill="#ffffff" />
+              <rect x="166" y="132" width="16" height="22" rx="2" fill="#3b2117" />
+              <rect x="168" y="135" width="12" height="9" rx="1" fill="#ffffff" />
+            </svg>
+          </div>
+        </div>
 
-            <label>
-              <input type="checkbox" name="quick-condition" value="lunch" />
+        <div class="tw-grid tw-gap-4 lg:tw-grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:tw-items-start">
+          <form id="search-form" class="gm-card tw-grid tw-gap-4" novalidate aria-labelledby="search-form-title">
+            <h2 id="search-form-title" class="visually-hidden">お店を探す</h2>
 
-              <span aria-hidden="true">🍴</span>
+            <div>
+              <label for="location-select" class="gm-label">
+                <i class="fa-solid fa-location-dot tw-text-primary" aria-hidden="true"></i>
+                探す場所を選ぶ
+              </label>
+              <div class="gm-select-wrap">
+                <i class="fa-solid fa-store gm-input-icon" aria-hidden="true"></i>
+                <select id="location-select" class="gm-input gm-input-with-icon" aria-describedby="location-select-hint"></select>
+              </div>
+              <p id="location-select-hint" class="gm-help">
+                検索は選択中の地点から半径3km以内が対象です。
+              </p>
+              <div id="home-no-location" class="gm-inline-empty" hidden>
+                <p class="tw-m-0">まだ地点が登録されていません。</p>
+                <button type="button" class="gm-btn gm-btn-outline gm-btn-sm" id="home-add-location">
+                  <i class="fa-solid fa-plus" aria-hidden="true"></i>地点を登録する
+                </button>
+              </div>
+            </div>
 
-              ランチ
-            </label>
+            <div>
+              <label for="keyword" class="gm-label">検索条件</label>
+              <div class="gm-select-wrap">
+                <i class="fa-solid fa-magnifying-glass gm-input-icon" aria-hidden="true"></i>
+                <input
+                  type="search"
+                  id="keyword"
+                  class="gm-input gm-input-with-icon"
+                  maxlength="150"
+                  autocomplete="off"
+                  placeholder="店名・読みかな（例：カフェ、ラーメン）"
+                />
+              </div>
+            </div>
 
-            <label>
-              <input type="checkbox" name="quick-condition" value="parking" />
+            <fieldset class="gm-quick">
+              <legend class="visually-hidden">よく使う条件</legend>
 
-              <span aria-hidden="true">P</span>
+              <label class="gm-quick-item">
+                <input type="checkbox" name="quick-condition" value="lunch" class="gm-quick-input" />
+                <span class="gm-quick-icon gm-quick-icon-orange" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
+                <span>ランチ</span>
+              </label>
 
-              駐車場
-            </label>
+              <label class="gm-quick-item">
+                <input type="checkbox" name="quick-condition" value="parking" class="gm-quick-input" />
+                <span class="gm-quick-icon gm-quick-icon-green" aria-hidden="true"><i class="fa-solid fa-square-parking"></i></span>
+                <span>駐車場</span>
+              </label>
 
-            <label>
-              <input
-                type="checkbox"
-                name="quick-condition"
-                value="barrierFree"
-              />
+              <label class="gm-quick-item">
+                <input type="checkbox" name="quick-condition" value="barrierFree" class="gm-quick-input" />
+                <span class="gm-quick-icon gm-quick-icon-teal" aria-hidden="true"><i class="fa-solid fa-wheelchair"></i></span>
+                <span>バリアフリー</span>
+              </label>
+            </fieldset>
 
-              <span aria-hidden="true">♿</span>
+            <button type="submit" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              お店を探す<span class="tw-text-sm tw-font-semibold">（半径3km）</span>
+            </button>
+          </form>
 
-              バリアフリー
-            </label>
-          </fieldset>
-
-          <button type="submit" class="primary-button">
-            お店を探す（半径3km）
-          </button>
-        </form>
+          <section class="gm-card" aria-labelledby="home-locations-title">
+            <div class="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-mb-2">
+              <h2 id="home-locations-title" class="gm-card-title">登録した場所</h2>
+              <a href="#locations" class="gm-text-link">
+                すべて見る<i class="fa-solid fa-chevron-right tw-ml-1 tw-text-xs" aria-hidden="true"></i>
+              </a>
+            </div>
+            <ul id="home-location-list" class="gm-list"></ul>
+          </section>
+        </div>
       </section>
 
       <!-- =================================
-             02. 検索結果
-        ================================== -->
+           SCR-03／04／05 店舗一覧・地図・同時表示
+      ================================== -->
+      <section id="page-results" class="gm-page" aria-labelledby="results-title" hidden>
+        <h1 id="results-title" class="visually-hidden">検索結果</h1>
 
-      <section id="page-results" class="page" hidden>
-        <div class="page-heading">
-          <h1>検索結果</h1>
+        <div class="gm-location-bar">
+          <i class="fa-solid fa-location-dot tw-text-primary" aria-hidden="true"></i>
+          <p class="tw-m-0 tw-min-w-0 tw-flex-1">
+            <strong id="result-location">地点未登録</strong>
+            <span class="tw-text-sm tw-text-muted">周辺（半径3km）</span>
+          </p>
+          <a href="#locations" class="gm-btn gm-btn-soft gm-btn-sm">変更</a>
+        </div>
 
-          <button type="button" id="refresh-results" class="secondary-button">
-            更新
+        <div class="gm-view-switch lg:tw-hidden" role="group" aria-label="表示形式">
+          <button type="button" id="show-list" aria-pressed="true">
+            <i class="fa-solid fa-list" aria-hidden="true"></i>リスト
+          </button>
+          <button type="button" id="show-map" aria-pressed="false">
+            <i class="fa-regular fa-map" aria-hidden="true"></i>地図
           </button>
         </div>
 
-        <div class="panel compact">
-          <strong id="result-location"> 登録地点 </strong>
+        <div class="gm-filter-bar">
+          <button type="button" id="open-filter" class="gm-btn gm-btn-outline gm-btn-sm" aria-controls="filter-sheet">
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i>絞り込み
+            <span id="filter-count-badge" class="gm-badge" hidden></span>
+          </button>
+          <ul id="active-chips" class="gm-chip-row" aria-label="適用中の条件"></ul>
+        </div>
 
-          <span id="last-updated"> 最終更新：未取得 </span>
-
-          <div class="view-switch" aria-label="表示形式">
-            <button type="button" id="show-list" aria-pressed="true">
-              リスト
-            </button>
-
-            <button type="button" id="show-map" aria-pressed="false">
-              地図
-            </button>
+        <div class="gm-results-meta">
+          <div class="tw-min-w-0">
+            <p class="tw-m-0 tw-font-bold">
+              検索結果 <span id="result-total" class="tw-text-lg">0</span>件
+            </p>
+            <p id="result-count" class="tw-m-0 tw-text-sm tw-text-muted"></p>
+          </div>
+          <div class="tw-flex tw-items-center tw-gap-2">
+            <label for="sort" class="tw-text-sm tw-font-semibold tw-whitespace-nowrap">並び替え</label>
+            <select id="sort" class="gm-input gm-input-sm">
+              <option value="distanceAsc">距離が近い順</option>
+              <option value="distanceDesc">距離が遠い順</option>
+              <option value="nameAsc">店名順（あ→ん）</option>
+              <option value="nameDesc">店名順（ん→あ）</option>
+            </select>
           </div>
         </div>
 
-        <div class="toolbar">
-          <button type="button" id="open-filter" class="secondary-button">
-            詳細フィルター
-          </button>
-
-          <button type="button" id="quick-save-preset" class="secondary-button">
-            条件を保存
-          </button>
-
-          <label for="sort">並び替え</label>
-
-          <select id="sort">
-            <option value="distanceAsc">距離が近い順</option>
-
-            <option value="distanceDesc">距離が遠い順</option>
-
-            <option value="nameAsc">店名昇順</option>
-
-            <option value="nameDesc">店名降順</option>
-          </select>
+        <div class="gm-meta-line">
+          <span id="last-updated">最終更新：未取得</span>
+          <span id="acquisition-status"></span>
+          <span class="tw-flex tw-gap-1 tw-ml-auto">
+            <button type="button" id="refresh-results" class="gm-btn gm-btn-ghost gm-btn-sm">
+              <i class="fa-solid fa-rotate" aria-hidden="true"></i>更新
+            </button>
+            <button type="button" id="quick-save-preset" class="gm-btn gm-btn-ghost gm-btn-sm">
+              <i class="fa-regular fa-bookmark" aria-hidden="true"></i>条件を保存
+            </button>
+          </span>
         </div>
 
-        <p id="result-count" role="status" aria-live="polite"></p>
-
-        <p id="acquisition-status"></p>
-
-        <div class="results-layout">
-          <div id="list-panel">
-            <div id="restaurant-list" class="restaurant-list"></div>
-
-            <button
-              type="button"
-              id="load-more"
-              class="secondary-button full-width"
-              hidden
-            >
-              もっと見る
+        <div class="gm-results-layout">
+          <div id="list-panel" class="tw-min-w-0">
+            <div id="results-state"></div>
+            <ul id="restaurant-list" class="gm-shop-list" aria-label="店舗一覧"></ul>
+            <button type="button" id="load-more" class="gm-btn gm-btn-outline tw-w-full" hidden>
+              もっと見る<span id="load-more-detail" class="tw-text-sm"></span>
             </button>
           </div>
 
-          <div id="map-panel" hidden>
-            <div id="restaurant-map" class="map" aria-label="店舗地図"></div>
-
-            <p class="muted">地図上の円は直線距離の検索範囲です。</p>
-
+          <div id="map-panel" class="tw-min-w-0" hidden>
+            <div id="restaurant-map" class="gm-map"></div>
+            <p class="gm-help">
+              地図上の円は直線距離の検索範囲です。地図を動かしても再検索はしません。店舗はすべて一覧でも確認できます。
+            </p>
             <a
+              class="gm-text-link tw-text-sm"
               href="https://www.openstreetmap.org/fixthemap"
               target="_blank"
               rel="noopener noreferrer"
-            >
-              地図の問題を報告
-            </a>
+            >地図の問題を報告<span class="visually-hidden">（新しいタブで開く）</span></a>
           </div>
         </div>
       </section>
 
       <!-- =================================
-             03. お気に入り
-        ================================== -->
+           SCR-13 お気に入り一覧
+      ================================== -->
+      <section id="page-favorites" class="gm-page gm-page-narrow" aria-labelledby="favorites-title" hidden>
+        <div class="gm-page-head">
+          <h1 id="favorites-title" class="gm-page-title">お気に入り</h1>
+          <button type="button" id="refresh-favorites" class="gm-btn gm-btn-ghost gm-btn-sm">
+            <i class="fa-solid fa-rotate" aria-hidden="true"></i>更新
+          </button>
+        </div>
+        <ul id="favorite-tabs" class="gm-chip-row tw-mb-3" aria-label="ジャンルで絞り込み"></ul>
+        <p id="favorite-status" class="gm-help" role="status"></p>
+        <div id="favorite-state"></div>
+        <ul id="favorite-list" class="gm-shop-list" aria-label="お気に入り店舗"></ul>
+      </section>
 
-      <section id="page-favorites" class="page" hidden>
-        <div class="page-heading">
-          <h1>お気に入り</h1>
+      <!-- =================================
+           SCR-07 登録地点管理
+      ================================== -->
+      <section id="page-locations" class="gm-page gm-page-narrow" aria-labelledby="locations-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="locations-title" class="gm-page-title">登録地点の管理</h1>
+        </div>
+        <p class="gm-help">
+          よく使う場所を登録しておくと、地点を切り替えるだけで周辺のお店を探せます。登録件数の上限はありません（ブラウザの保存容量に依存）。
+        </p>
+        <ul id="location-list" class="gm-list gm-list-cards"></ul>
+        <button type="button" id="add-location" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full tw-mt-4">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>新しい地点を登録
+        </button>
+      </section>
 
-          <button type="button" id="refresh-favorites">更新</button>
+      <!-- =================================
+           SCR-12 プリセット管理
+      ================================== -->
+      <section id="page-presets" class="gm-page gm-page-narrow" aria-labelledby="presets-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="presets-title" class="gm-page-title">検索条件のプリセット</h1>
+        </div>
+        <p class="gm-help">
+          <span id="preset-location-name">選択中の地点</span>で保存した検索条件です。選ぶだけで同じ条件を適用できます。
+        </p>
+        <button type="button" id="add-preset" class="gm-btn gm-btn-outline-primary tw-w-full tw-mb-4">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>現在の検索条件を登録
+        </button>
+        <ul id="preset-list" class="gm-list gm-list-cards"></ul>
+      </section>
+
+      <!-- =================================
+           SCR-14／15／16 設定
+      ================================== -->
+      <section id="page-settings" class="gm-page gm-page-narrow" aria-labelledby="settings-title" hidden>
+        <div class="gm-page-head">
+          <h1 id="settings-title" class="gm-page-title">設定</h1>
         </div>
 
-        <p id="favorite-status" role="status"></p>
+        <form id="settings-form" class="tw-grid tw-gap-4" novalidate>
+          <section class="gm-card" aria-labelledby="appearance-title">
+            <h2 id="appearance-title" class="gm-card-title">表示・アクセシビリティ</h2>
 
-        <div id="favorite-list" class="restaurant-list"></div>
-      </section>
+            <fieldset class="gm-setting-row">
+              <legend class="gm-setting-label">テーマ</legend>
+              <div class="gm-segment">
+                <input type="radio" class="btn-check" name="theme" id="theme-light" value="light" />
+                <label for="theme-light">ライト</label>
+                <input type="radio" class="btn-check" name="theme" id="theme-dark" value="dark" />
+                <label for="theme-dark">ダーク</label>
+                <input type="radio" class="btn-check" name="theme" id="theme-system" value="system" />
+                <label for="theme-system">システム</label>
+              </div>
+            </fieldset>
 
-      <!-- =================================
-             04. 登録地点管理
-        ================================== -->
+            <fieldset class="gm-setting-row">
+              <legend class="gm-setting-label">文字サイズ</legend>
+              <div class="gm-segment">
+                <input type="radio" class="btn-check" name="font-size" id="font-normal" value="normal" />
+                <label for="font-normal"><span class="tw-text-sm" aria-hidden="true">A</span>標準</label>
+                <input type="radio" class="btn-check" name="font-size" id="font-large" value="large" />
+                <label for="font-large"><span class="tw-text-base" aria-hidden="true">A</span>大</label>
+                <input type="radio" class="btn-check" name="font-size" id="font-extra-large" value="extra-large" />
+                <label for="font-extra-large"><span class="tw-text-lg" aria-hidden="true">A</span>特大</label>
+              </div>
+            </fieldset>
 
-      <section id="page-locations" class="page" hidden>
-        <h1>登録地点の管理</h1>
+            <div class="gm-setting-row gm-switch-row form-check form-switch">
+              <label class="form-check-label" for="high-contrast">
+                <span class="gm-setting-label">高コントラスト</span>
+                <span class="gm-help tw-block tw-m-0">文字やボタンのコントラストを強くします</span>
+              </label>
+              <input class="form-check-input" type="checkbox" role="switch" id="high-contrast" />
+            </div>
 
-        <div id="location-list" class="management-list"></div>
+            <div class="gm-setting-row gm-switch-row form-check form-switch">
+              <label class="form-check-label" for="reduce-motion">
+                <span class="gm-setting-label">アニメーションの低減</span>
+                <span class="gm-help tw-block tw-m-0">画面の動きを控えめにします（OSの設定も反映されます）</span>
+              </label>
+              <input class="form-check-input" type="checkbox" role="switch" id="reduce-motion" />
+            </div>
 
-        <button type="button" id="add-location" class="primary-button">
-          ＋ 新しい地点を登録
-        </button>
-      </section>
-
-      <!-- =================================
-             05. プリセット管理
-        ================================== -->
-
-      <section id="page-presets" class="page" hidden>
-        <h1>検索条件のプリセット</h1>
-
-        <p>選択中の地点に保存した検索条件を管理できます。</p>
-
-        <div id="preset-list" class="management-list"></div>
-
-        <button type="button" id="add-preset" class="primary-button">
-          ＋ 現在の検索条件を登録
-        </button>
-      </section>
-
-      <!-- =================================
-             06. 設定
-        ================================== -->
-
-      <section id="page-settings" class="page" hidden>
-        <h1>設定</h1>
-
-        <form id="settings-form">
-          <div class="panel">
-            <h2>表示・アクセシビリティ</h2>
-
-            <label for="theme">テーマ</label>
-
-            <select id="theme">
-              <option value="system">システムに合わせる</option>
-              <option value="light">ライト</option>
-              <option value="dark">ダーク</option>
-            </select>
-
-            <label for="font-size">文字サイズ</label>
-
-            <select id="font-size">
-              <option value="normal">標準</option>
-              <option value="large">大</option>
-              <option value="extra-large">特大</option>
-            </select>
-
-            <label class="check-row">
-              <input type="checkbox" id="high-contrast" />
-              ハイコントラスト
-            </label>
-
-            <label class="check-row">
-              <input type="checkbox" id="reduce-motion" />
-              アニメーションの低減
-            </label>
-
-            <button type="button" id="reset-appearance">
-              表示設定を初期化
+            <button type="button" id="reset-appearance" class="gm-btn gm-btn-ghost gm-btn-sm tw-mt-2">
+              <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>表示設定を初期化
             </button>
-          </div>
+          </section>
 
-          <div class="panel">
-            <h2>自動更新設定</h2>
+          <section class="gm-card" aria-labelledby="refresh-title">
+            <h2 id="refresh-title" class="gm-card-title">自動更新設定</h2>
 
-            <label class="check-row">
-              <input type="checkbox" id="auto-refresh" />
+            <div class="gm-setting-row gm-switch-row form-check form-switch">
+              <label class="form-check-label" for="auto-refresh">
+                <span class="gm-setting-label">店舗情報を自動更新する</span>
+                <span class="gm-help tw-block tw-m-0">画面を表示している間のみ更新します</span>
+              </label>
+              <input class="form-check-input" type="checkbox" role="switch" id="auto-refresh" />
+            </div>
 
-              自動更新を有効にする
-            </label>
-
-            <label for="refresh-interval"> 更新間隔 </label>
-
-            <select id="refresh-interval">
-              <option value="5">5分</option>
-              <option value="15">15分</option>
-              <option value="30">30分</option>
-              <option value="60">1時間</option>
-              <option value="180">3時間</option>
-              <option value="360">6時間</option>
-            </select>
-          </div>
+            <div class="gm-setting-row">
+              <label for="refresh-interval" class="gm-setting-label">更新間隔</label>
+              <select id="refresh-interval" class="gm-input gm-input-sm tw-max-w-[12rem]">
+                <option value="5">5分</option>
+                <option value="15">15分</option>
+                <option value="30">30分</option>
+                <option value="60">1時間</option>
+                <option value="180">3時間</option>
+                <option value="360">6時間</option>
+              </select>
+            </div>
+            <p class="gm-help tw-mb-0">
+              サーバー側のキャッシュ（約30分）や利用制限を優先するため、短い間隔でも最新の取得時刻にならない場合があります。その場合は元の取得日時を表示します。
+            </p>
+          </section>
         </form>
 
-        <div class="panel">
-          <h2>地点・検索条件</h2>
+        <section class="gm-card tw-mt-4" aria-labelledby="other-settings-title">
+          <h2 id="other-settings-title" class="gm-card-title">その他</h2>
+          <ul class="gm-menu-list">
+            <li><a href="#presets"><i class="fa-regular fa-star" aria-hidden="true"></i>検索条件のプリセット<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#locations"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>登録した地点の管理<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#data"><i class="fa-solid fa-database" aria-hidden="true"></i>データ管理（バックアップ・復元・削除）<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#status"><i class="fa-regular fa-bell" aria-hidden="true"></i>お知らせ・システムステータス<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#help"><i class="fa-regular fa-circle-question" aria-hidden="true"></i>ヘルプ・FAQ・お問い合わせ<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#terms"><i class="fa-regular fa-file-lines" aria-hidden="true"></i>利用規約<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#privacy"><i class="fa-solid fa-user-shield" aria-hidden="true"></i>プライバシーポリシー<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#licenses"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>外部サービス・ライセンス<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+            <li><a href="#about"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>このアプリについて<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+          </ul>
+        </section>
+      </section>
 
-          <button type="button" data-page="locations">登録地点の管理</button>
+      <!-- =================================
+           SCR-17／18 ストレージ・データ管理、バックアップ・復元
+      ================================== -->
+      <section id="page-data" class="gm-page gm-page-narrow" aria-labelledby="data-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="data-title" class="gm-page-title">データ管理</h1>
+        </div>
 
-          <button type="button" data-page="presets">
-            検索条件のプリセット
+        <section class="gm-card tw-mb-4" aria-labelledby="storage-title">
+          <h2 id="storage-title" class="gm-card-title">端末内の保存データ</h2>
+          <p id="storage-size" class="tw-font-semibold"></p>
+          <p class="gm-help tw-mb-0">
+            登録地点・検索条件・プリセット・設定は、この端末のブラウザ内（LocalStorage）にのみ保存されます。LocalStorageは暗号化された保管庫ではありません。共有端末では利用後にデータを削除してください。
+          </p>
+        </section>
+
+        <section class="gm-card tw-mb-4" aria-labelledby="backup-title">
+          <h2 id="backup-title" class="gm-card-title">バックアップ（JSON）</h2>
+          <p class="gm-help">
+            地点・検索条件・プリセット・設定を書き出します。店舗情報・画像・APIキーは含まれません。<strong>住所や座標が含まれる場合があるため、取り扱いにご注意ください。</strong>
+          </p>
+          <button type="button" id="export-backup" class="gm-btn gm-btn-outline-primary tw-w-full">
+            <i class="fa-solid fa-file-export" aria-hidden="true"></i>バックアップを作成
           </button>
+        </section>
+
+        <section class="gm-card tw-mb-4" aria-labelledby="restore-title">
+          <h2 id="restore-title" class="gm-card-title">バックアップから復元</h2>
+          <div class="tw-grid tw-gap-3">
+            <div>
+              <label for="backup-file" class="gm-label">バックアップファイル（.json、5MBまで）</label>
+              <input type="file" id="backup-file" class="gm-input" accept=".json,application/json" />
+            </div>
+            <fieldset>
+              <legend class="gm-label">復元方法</legend>
+              <div class="gm-radio-list">
+                <label><input type="radio" name="import-mode" value="merge" checked /> 追加する（重複は既存データを優先）</label>
+                <label><input type="radio" name="import-mode" value="replace" /> すべて上書きする</label>
+              </div>
+            </fieldset>
+            <button type="button" id="import-backup" class="gm-btn gm-btn-outline-primary tw-w-full">
+              <i class="fa-solid fa-file-import" aria-hidden="true"></i>内容を確認して復元
+            </button>
+            <p class="gm-help tw-m-0">ファイルは端末内で検証され、外部には送信されません。エラー時は既存データを変更しません。</p>
+          </div>
+        </section>
+
+        <section class="gm-card" aria-labelledby="reset-title">
+          <h2 id="reset-title" class="gm-card-title">データの削除・初期化</h2>
+          <div class="tw-grid tw-gap-2">
+            <button type="button" id="clear-filters" class="gm-btn gm-btn-outline">前回の検索条件を削除</button>
+            <button type="button" id="clear-presets" class="gm-btn gm-btn-outline">すべてのプリセットを削除</button>
+            <button type="button" id="clear-favorites" class="gm-btn gm-btn-outline" hidden>すべてのお気に入りを削除</button>
+            <button type="button" id="reset-settings" class="gm-btn gm-btn-outline">設定を初期値に戻す</button>
+            <button type="button" id="clear-data" class="gm-btn gm-btn-danger tw-mt-2">
+              <i class="fa-solid fa-trash-can" aria-hidden="true"></i>すべての利用者データを削除
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <!-- =================================
+           SCR-19／20／26 お知らせ・システムステータス・メンテナンス
+      ================================== -->
+      <section id="page-status" class="gm-page gm-page-narrow" aria-labelledby="status-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="status-title" class="gm-page-title">お知らせ・システムステータス</h1>
         </div>
 
-        <div class="panel">
-          <h2>データ管理</h2>
+        <section class="gm-card tw-mb-4" aria-labelledby="system-status-title">
+          <div class="tw-flex tw-items-center tw-justify-between tw-gap-2">
+            <h2 id="system-status-title" class="gm-card-title tw-m-0">システムステータス</h2>
+            <button type="button" id="check-status" class="gm-btn gm-btn-ghost gm-btn-sm">
+              <i class="fa-solid fa-rotate" aria-hidden="true"></i>最新の状態を確認
+            </button>
+          </div>
+          <p class="tw-my-3">
+            <span id="system-status-badge" class="gm-status-badge gm-status-unknown">未確認</span>
+          </p>
+          <p id="system-status-text" class="tw-mb-1"></p>
+          <p id="system-checked-at" class="gm-help"></p>
+          <ul id="service-status-list" class="gm-status-list"></ul>
+          <p class="gm-help tw-mb-0">
+            監視結果は目安であり、サービスの稼働を保証するもの（SLA）ではありません。
+          </p>
+        </section>
 
-          <p id="storage-size"></p>
+        <section class="gm-card" aria-labelledby="notice-title">
+          <h2 id="notice-title" class="gm-card-title">お知らせ</h2>
+          <ul id="notice-list" class="gm-notice-list"></ul>
+        </section>
+      </section>
 
-          <button type="button" id="export-backup">バックアップを作成</button>
-
-          <label for="backup-file"> バックアップファイル </label>
-
-          <input type="file" id="backup-file" accept=".json,application/json" />
-
-          <label for="import-mode">復元方法</label>
-
-          <select id="import-mode">
-            <option value="merge">追加（既存データを優先）</option>
-
-            <option value="replace">全データを上書き</option>
-          </select>
-
-          <button type="button" id="import-backup">バックアップを復元</button>
-
-          <button type="button" class="danger-button" id="clear-data">
-            すべての利用者データを削除
-          </button>
+      <!-- =================================
+           SCR-21／28 ヘルプ・FAQ・問い合わせ
+      ================================== -->
+      <section id="page-help" class="gm-page gm-page-narrow" aria-labelledby="help-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="help-title" class="gm-page-title">ヘルプ・FAQ</h1>
         </div>
 
-        <div class="panel">
-          <h2>お知らせ・システムステータス</h2>
-
-          <p id="system-status">未確認</p>
-
-          <p id="system-notice"></p>
-
-          <button type="button" id="check-status">最新の状態を確認</button>
+        <div class="gm-card gm-faq">
+          <details>
+            <summary>使い方を知りたい</summary>
+            <ol>
+              <li>「登録地点の管理」から、住所・駅名・現在地・地図・緯度経度のいずれかで地点を登録します。</li>
+              <li>ホームで地点を選び「お店を探す」を押すと、半径3km以内のお店を近い順に最大100件、一覧で表示します。</li>
+              <li>「絞り込み」から距離・ジャンル・設備条件を指定できます。よく使う条件はプリセットとして保存できます。</li>
+            </ol>
+          </details>
+          <details>
+            <summary>検索結果に表示されないお店がある</summary>
+            <p>ホットペッパーグルメWebサービスで取得できる店舗のうち、登録地点から近い順に最大100件を表示します。すべての飲食店を網羅するものではありません。周辺に100件を超える店舗がある場合は、遠いお店は表示されません。通信状況などにより想定より少ない件数しか取得できなかった場合は「部分取得」と表示します。</p>
+          </details>
+          <details>
+            <summary>徒歩時間はどのように計算していますか</summary>
+            <p>登録地点からの直線距離を分速80mで割り、切り上げた目安です。道路・信号・坂道などは考慮していません。</p>
+          </details>
+          <details>
+            <summary>営業時間や予算は正確ですか</summary>
+            <p>提供元の掲載内容をそのまま表示しています。営業中かどうか・臨時休業は判定していません。平均予算はディナーの平均予算で、ランチの予算ではありません。最新情報は店舗の公式ページなどでご確認ください。</p>
+          </details>
+          <details>
+            <summary>設備条件で絞り込むと件数が少ない</summary>
+            <p>設備情報は自由記述のため「あり」と明確に判定できる店舗のみを条件に一致させています。「要確認」「不明」などは一致させません。</p>
+          </details>
+          <details>
+            <summary>エラーコードが表示された</summary>
+            <p>ERR_NETWORK（通信エラー）、ERR_TIMEOUT（タイムアウト）、ERR_RATE_LIMIT（利用制限）、ERR_PARTIAL（部分取得）、ERR_OFFLINE（オフライン）、ERR_STORAGE（端末保存エラー）などがあります。表示された識別番号をお問い合わせ時にお知らせください。</p>
+          </details>
+          <details>
+            <summary>別の端末にデータを移したい</summary>
+            <p>「データ管理」でバックアップを作成し、別の端末で復元してください。自動同期は行いません。</p>
+          </details>
         </div>
 
-        <div class="panel">
-          <h2>このアプリについて</h2>
+        <section id="contact" class="gm-card tw-mt-4" aria-labelledby="contact-title">
+          <h2 id="contact-title" class="gm-card-title">問い合わせ・不具合報告</h2>
+          <p>
+            不具合のご報告は、公開時に開発者が案内する窓口（GitHubリポジトリのIssue等）からお願いします。
+          </p>
+          <ul>
+            <li>画面に表示されたエラーコードと識別番号</li>
+            <li>利用している端末・ブラウザ</li>
+            <li>操作の手順</li>
+          </ul>
+          <p class="gm-help tw-mb-0">
+            登録地点の住所・座標、APIキー、個人を特定できる情報は記載しないでください。セキュリティ上の問題は公開Issueに投稿せず、SECURITY.md の案内に従ってください。
+          </p>
+        </section>
+      </section>
 
-          <p id="app-version"></p>
+      <!-- =================================
+           SCR-22 利用規約
+      ================================== -->
+      <section id="page-terms" class="gm-page gm-page-narrow" aria-labelledby="terms-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="terms-title" class="gm-page-title">利用規約</h1>
+        </div>
+        <div id="terms-content" class="gm-card gm-prose">
+          <p class="gm-help">版：1.0.0（公開前の案）／制定：2026年11月25日</p>
+          <h2>第1条（本アプリについて）</h2>
+          <p>グルメマップ（以下「本アプリ」）は、登録した地点の周辺にある飲食店の検索を補助する、非商用のポートフォリオ作品です。ログイン・決済・予約・口コミ機能はありません。</p>
+          <h2>第2条（掲載情報）</h2>
+          <ul>
+            <li>店舗情報はホットペッパーグルメWebサービスから取得できる範囲に限られ、登録地点から近い順に最大100件を表示します。すべての飲食店を網羅しません。</li>
+            <li>営業時間・定休日・平均ディナー予算・設備情報などは提供元の掲載内容であり、正確性・最新性を保証しません。営業中かどうか・臨時休業は判定しません。</li>
+            <li>平均予算はディナーの平均予算で、ランチの予算ではありません。</li>
+            <li>徒歩時間は直線距離から計算した目安で、実際の経路とは異なります。</li>
+            <li>表示している取得日時は、提供元から取得した時刻です。キャッシュを利用した場合は元の取得時刻を表示します。</li>
+          </ul>
+          <h2>第3条（サービスの停止・制限）</h2>
+          <p>外部サービスの障害、利用回数の上限到達、メンテナンス等により、予告なく機能の停止・制限・一部取得となる場合があります。無料での継続提供は保証しません。</p>
+          <h2>第4条（禁止事項）</h2>
+          <ul>
+            <li>本アプリや外部サービスに過度な負荷をかける行為、自動化ツールによる大量アクセス</li>
+            <li>取得した店舗情報の大量複製・再配布</li>
+            <li>法令や外部サービスの利用規約に反する行為</li>
+          </ul>
+          <h2>第5条（免責）</h2>
+          <p>本アプリの利用により生じた損害について、開発者は故意または重過失がある場合を除き責任を負いません。外部リンク先（ホットペッパーグルメ、Googleマップ等）の内容は各提供元の責任となります。</p>
+          <h2>第6条（改定）</h2>
+          <p>本規約を改定した場合は、アプリ内で改定内容を示し、改めて同意を確認します。</p>
+          <h3>改定履歴</h3>
+          <ul>
+            <li>1.0.0（2026年11月25日）：初版（公開前の案）</li>
+          </ul>
+        </div>
+      </section>
 
-          <details>
-            <summary>ヘルプ・FAQ</summary>
+      <!-- =================================
+           SCR-23 プライバシーポリシー
+      ================================== -->
+      <section id="page-privacy" class="gm-page gm-page-narrow" aria-labelledby="privacy-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="privacy-title" class="gm-page-title">プライバシーポリシー</h1>
+        </div>
+        <div id="privacy-content" class="gm-card gm-prose">
+          <p class="gm-help">版：1.0.0（公開前の案）／制定：2026年11月25日</p>
+          <h2>1. 端末内に保存する情報</h2>
+          <p>登録地点（名称・座標・住所）、検索条件、プリセット、表示設定、規約への同意日時は、利用者のブラウザ内（LocalStorage）にのみ保存します。運営側のサーバーやスプレッドシートには保存しません。LocalStorageは暗号化された保管庫ではないため、共有端末では利用後に「データ管理」から削除してください。</p>
+          <h2>2. 外部に送信する情報</h2>
+          <ul>
+            <li><strong>店舗検索時</strong>：選択中の地点の座標を、Google Apps Script（GAS）を経由してホットペッパーグルメWebサービスに送信します。</li>
+            <li><strong>住所・駅名検索時</strong>：入力した文字列を、GASを経由してGeoapifyに送信します。</li>
+            <li><strong>現在地の取得</strong>：ボタンを押し、端末で許可した場合にのみ一度だけ取得します。継続的な追跡はしません。</li>
+            <li><strong>地図表示時</strong>：OpenStreetMapのタイルサーバーに地図画像を要求します。</li>
+            <li><strong>画面表示時</strong>：フォント（Google Fonts）・ライブラリ（jsDelivr）・店舗画像（ホットペッパーグルメ）を各提供元から読み込みます。</li>
+            <li><strong>Googleマップ・共有</strong>：Googleマップには店舗の座標のみ、共有には店舗のURLのみを渡します。登録地点の座標や検索条件は渡しません。</li>
+          </ul>
+          <p>各外部サービスにおける通信記録などの取り扱いは、各提供元のポリシーによります。</p>
+          <h2>3. 運用ログ</h2>
+          <p>障害調査のため、日時・匿名の識別番号・エラーの分類・機能別の利用件数のみを記録します。座標・住所・検索語・IPアドレス等の個人を識別する情報は記録しません。エラー・稼働記録は90日、集計済み統計は365日（暫定）で自動削除します。</p>
+          <h2>4. 広告・追跡</h2>
+          <p>広告配信、行動追跡、個人を識別する目的の統計は行いません。</p>
+          <h2>5. データの削除</h2>
+          <p>「設定」→「データ管理」から、項目別または全データを削除できます。</p>
+          <h3>改定履歴</h3>
+          <ul>
+            <li>1.0.0（2026年11月25日）：初版（公開前の案）</li>
+          </ul>
+        </div>
+      </section>
 
-            <h3>検索結果に表示されない店舗がある</h3>
+      <!-- =================================
+           SCR-24 外部サービス・ライセンス
+      ================================== -->
+      <section id="page-licenses" class="gm-page gm-page-narrow" aria-labelledby="licenses-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="licenses-title" class="gm-page-title">外部サービス・ライセンス</h1>
+        </div>
 
-            <p>
-              ホットペッパーグルメAPIで取得可能な
-              店舗のみを検索対象としています。
-            </p>
+        <section class="gm-card gm-prose tw-mb-4" aria-labelledby="services-title">
+          <h2 id="services-title">外部サービス</h2>
+          <dl class="gm-license-list">
+            <dt><a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener noreferrer">ホットペッパーグルメ Webサービス</a></dt>
+            <dd>店舗情報・店舗画像の提供（GAS経由で座標を送信）。Powered by ホットペッパーグルメ Webサービス／画像提供：ホットペッパー グルメ</dd>
+            <dt><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify Geocoding API</a></dt>
+            <dd>住所・駅名から座標を取得（GAS経由で入力文字列を送信）。データ：© OpenStreetMap contributors</dd>
+            <dt><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></dt>
+            <dd>地図タイル・地図データ（ODbL）。© OpenStreetMap contributors</dd>
+            <dt><a href="https://developers.google.com/maps/documentation/urls/get-started" target="_blank" rel="noopener noreferrer">Google Maps URLs</a></dt>
+            <dd>店舗の座標を指定してGoogleマップを開く（店舗座標のみ）</dd>
+            <dt><a href="https://developers.google.com/apps-script" target="_blank" rel="noopener noreferrer">Google Apps Script・Googleスプレッドシート</a></dt>
+            <dd>API中継・入力検証・キャッシュ・運用管理</dd>
+            <dt>LINE（共有）</dt>
+            <dd>利用者が「LINEで共有」を選んだ場合のみ、店舗URLをLINEの共有画面に渡します</dd>
+            <dt>Google Fonts・jsDelivr</dt>
+            <dd>フォント・ライブラリの配信（画面表示時に各提供元へ通信が発生します）</dd>
+          </dl>
+        </section>
 
-            <h3>徒歩時間について</h3>
+        <section class="gm-card gm-prose" aria-labelledby="oss-title">
+          <h2 id="oss-title">オープンソースライセンス</h2>
+          <dl class="gm-license-list">
+            <dt><a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet 1.9.4</a></dt>
+            <dd>BSD-2-Clause © Volodymyr Agafonkin, CloudMade</dd>
+            <dt><a href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank" rel="noopener noreferrer">Leaflet.markercluster 1.5.3</a></dt>
+            <dd>MIT © Dave Leaver</dd>
+            <dt><a href="https://getbootstrap.com/" target="_blank" rel="noopener noreferrer">Bootstrap 5.3.3</a></dt>
+            <dd>MIT © The Bootstrap Authors</dd>
+            <dt><a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">Tailwind CSS 3.4.17</a></dt>
+            <dd>MIT © Tailwind Labs, Inc.（スタンドアロンCLIで事前生成）</dd>
+            <dt><a href="https://fontawesome.com/" target="_blank" rel="noopener noreferrer">Font Awesome Free 6.7.2</a></dt>
+            <dd>アイコン：CC BY 4.0／フォント：SIL OFL 1.1／コード：MIT © Fonticons, Inc.</dd>
+            <dt><a href="https://fonts.google.com/noto/specimen/Noto+Sans+JP" target="_blank" rel="noopener noreferrer">Noto Sans JP</a>・<a href="https://fonts.google.com/specimen/Inter" target="_blank" rel="noopener noreferrer">Inter</a></dt>
+            <dd>SIL Open Font License 1.1</dd>
+            <dt><a href="https://github.com/kazuhikoarase/qrcode-generator" target="_blank" rel="noopener noreferrer">qrcode-generator 1.4.4</a></dt>
+            <dd>MIT © Kazuhiko Arase（QRコードは株式会社デンソーウェーブの登録商標です）</dd>
+          </dl>
+        </section>
+      </section>
 
-            <p>
-              直線距離を80m/分で計算した目安です。
-              実際の経路や信号などは考慮していません。
-            </p>
-          </details>
-
-          <details id="terms">
-            <summary>利用規約（公開前の案）</summary>
-
-            <p>本アプリは店舗検索を補助する 非商用のポートフォリオです。</p>
-
-            <p>
-              店舗情報の正確性、営業時間、 定休日、予算、サービスの継続性は
-              保証されません。 最新情報は店舗公式ページなどで ご確認ください。
-            </p>
-          </details>
-
-          <details id="privacy">
-            <summary>プライバシーポリシー（公開前の案）</summary>
-
-            <p>登録地点、設定、検索条件は 利用者のブラウザ内に保存されます。</p>
-
-            <p>
-              店舗検索時には地点の座標を、 住所検索時には入力した住所や駅名を、
-              GASを経由して外部APIに送信します。 地図表示時には地図提供元への
-              通信が発生します。
-            </p>
-
-            <p>
-              LocalStorageは暗号化された保管庫では
-              ありません。共有端末での利用時は 保存内容にご注意ください。
-            </p>
-          </details>
-
-          <details>
-            <summary>外部サービス・ライセンス</summary>
-
-            <p>
-              <a href="https://webservice.recruit.co.jp/">
-                ホットペッパーグルメ Webサービス
-              </a>
-            </p>
-
-            <p>
-              <a href="https://www.geoapify.com/"> Geoapify </a>
-            </p>
-
-            <p>
-              <a href="https://leafletjs.com/"> Leaflet（BSD-2-Clause） </a>
-            </p>
-
-            <p>
-              <a href="https://github.com/Leaflet/Leaflet.markercluster">
-                Leaflet.markercluster（MIT）
-              </a>
-            </p>
-
-            <p>
-              <a href="https://www.openstreetmap.org/copyright">
-                OpenStreetMap contributors
-              </a>
-            </p>
-          </details>
-
-          <details>
-            <summary>問い合わせ・不具合報告</summary>
-
-            <p>
-              公開時に開発者の問い合わせ窓口を ここに掲載します。
-              個人の住所やAPIキーを報告内容に 含めないでください。
-            </p>
-          </details>
+      <!-- =================================
+           SCR-25 アプリ情報
+      ================================== -->
+      <section id="page-about" class="gm-page gm-page-narrow" aria-labelledby="about-title" hidden>
+        <div class="gm-page-head">
+          <a href="#settings" class="gm-back-link" aria-label="設定へ戻る">
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </a>
+          <h1 id="about-title" class="gm-page-title">このアプリについて</h1>
+        </div>
+        <div class="gm-card gm-prose">
+          <p>
+            <strong>グルメマップ（Gourmet Map）</strong>は、よく利用する場所を登録して、半径3km以内のおいしいお店を少ない操作で見つけるためのWebアプリです。ログインは不要です。
+          </p>
+          <dl class="gm-kv">
+            <dt>バージョン</dt><dd id="app-version"></dd>
+            <dt>利用規約</dt><dd id="terms-version"></dd>
+            <dt>プライバシーポリシー</dt><dd id="privacy-version"></dd>
+            <dt>規約への同意日時</dt><dd id="consent-date"></dd>
+            <dt>公開形態</dt><dd>一般公開・非商用ポートフォリオ（公開前の開発・検証段階）</dd>
+          </dl>
+          <p class="gm-help tw-mb-0">
+            Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener noreferrer">ホットペッパーグルメ Webサービス</a>
+          </p>
         </div>
       </section>
     </main>
 
     <!-- =====================================
-         店舗詳細モーダル
+         フッター（提供元クレジット：LEGAL-03／04）
     ====================================== -->
-
-    <dialog id="shop-dialog" aria-labelledby="shop-title">
-      <div class="dialog-heading">
-        <h2 id="shop-title" tabindex="-1"></h2>
-
-        <form method="dialog">
-          <button aria-label="店舗詳細を閉じる">閉じる</button>
-        </form>
-      </div>
-
-      <div id="shop-image"></div>
-
-      <dl id="shop-details" class="shop-details"></dl>
-
-      <div id="shop-actions" class="dialog-actions"></div>
-
-      <p id="shop-message" role="status"></p>
-    </dialog>
-
-    <!-- =====================================
-         詳細フィルター
-    ====================================== -->
-
-    <dialog id="filter-dialog" aria-labelledby="filter-title">
-      <div class="dialog-heading">
-        <h2 id="filter-title">詳細な条件で絞り込む</h2>
-
-        <form method="dialog">
-          <button>閉じる</button>
-        </form>
-      </div>
-
-      <form id="filter-form">
-        <label for="filter-keyword"> 店名・キーワード </label>
-
-        <input type="search" id="filter-keyword" maxlength="150" />
-
-        <label for="radius">距離</label>
-
-        <select id="radius">
-          <option value="300">300m以内</option>
-          <option value="500">500m以内</option>
-          <option value="1000">1km以内</option>
-          <option value="1500">1.5km以内</option>
-          <option value="2000">2km以内</option>
-          <option value="2500">2.5km以内</option>
-          <option value="3000">3km以内</option>
-        </select>
-
-        <fieldset>
-          <legend>ジャンル（複数選択）</legend>
-
-          <button type="button" id="select-all-genres">すべて選択</button>
-
-          <button type="button" id="clear-genres">すべて解除</button>
-
-          <div id="genre-options" class="checkbox-grid"></div>
-        </fieldset>
-
-        <fieldset>
-          <legend>設備・サービス</legend>
-
-          <div id="condition-options" class="checkbox-grid"></div>
-        </fieldset>
-
-        <label class="check-row">
-          <input type="checkbox" id="favorite-only" />
-
-          お気に入りのみ表示
-        </label>
-
-        <button type="submit" class="primary-button">この条件で検索</button>
-
-        <button type="button" id="reset-filters">条件をクリア</button>
-      </form>
-    </dialog>
-
-    <!-- =====================================
-         地点登録・編集
-    ====================================== -->
-
-    <dialog id="location-dialog" aria-labelledby="location-title">
-      <div class="dialog-heading">
-        <h2 id="location-title">地点の登録</h2>
-
-        <form method="dialog">
-          <button>閉じる</button>
-        </form>
-      </div>
-
-      <div class="panel compact">
-        <label for="address-query">住所・駅名</label>
-
-        <input
-          type="search"
-          id="address-query"
-          maxlength="150"
-          placeholder="例：東京駅"
-        />
-
-        <button type="button" id="search-address">地点候補を検索</button>
-
-        <div id="location-candidates"></div>
-
-        <p class="muted">
-          Powered by
-          <a href="https://www.geoapify.com/"> Geoapify </a>
-        </p>
-
-        <button type="button" id="use-gps">現在地を取得</button>
-
-        <button type="button" id="use-location-map">地図から選択</button>
-
-        <div
-          id="location-map"
-          class="map"
-          aria-label="地点選択地図"
-          hidden
-        ></div>
-      </div>
-
-      <form id="location-form">
-        <label for="location-name">地点名</label>
-
-        <input id="location-name" maxlength="80" required />
-
-        <label for="latitude">緯度</label>
-
-        <input
-          type="number"
-          id="latitude"
-          min="20"
-          max="46"
-          step="any"
-          required
-        />
-
-        <label for="longitude">経度</label>
-
-        <input
-          type="number"
-          id="longitude"
-          min="122"
-          max="154"
-          step="any"
-          required
-        />
-
-        <p id="location-address"></p>
-
-        <p id="location-message" role="status"></p>
-
-        <button type="submit" class="primary-button">地点を保存する</button>
-      </form>
-    </dialog>
-
-    <!-- =====================================
-         初回利用案内
-    ====================================== -->
-
-    <dialog id="consent-dialog" aria-labelledby="consent-title">
-      <div class="welcome-icon" aria-hidden="true">🍴</div>
-
-      <h2 id="consent-title">グルメマップへようこそ！</h2>
-
-      <p>いつもの場所から半径3km以内の おいしいお店を見つけましょう。</p>
-
-      <p>
-        登録地点や検索条件は端末内に保存されます。 検索時には座標や住所・駅名が
-        外部サービスに送信されます。
+    <footer class="gm-footer">
+      <p class="tw-m-0">
+        <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener noreferrer">Powered by ホットペッパーグルメ Webサービス</a>
       </p>
-
-      <button type="button" id="read-legal">
-        利用規約・プライバシーポリシーを確認
-      </button>
-
-      <label class="check-row">
-        <input type="checkbox" id="consent-checkbox" />
-
-        利用規約に同意し、 プライバシーポリシーを確認しました
-      </label>
-
-      <button type="button" id="accept-consent" class="primary-button" disabled>
-        利用を開始する
-      </button>
-    </dialog>
-
-    <!-- フッター -->
-
-    <footer>
-      <p>
-        <a
-          href="https://webservice.recruit.co.jp/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by ホットペッパーグルメ Webサービス
-        </a>
+      <p class="tw-m-0">画像提供：ホットペッパー グルメ ／ 地図：© OpenStreetMap contributors ／ 住所検索：Geoapify</p>
+      <p class="tw-m-0">店舗情報・営業時間は提供元の掲載内容です。最新情報は店舗公式ページ等でご確認ください。</p>
+      <p class="tw-m-0 tw-flex tw-flex-wrap tw-justify-center tw-gap-x-3">
+        <a href="#terms">利用規約</a><a href="#privacy">プライバシーポリシー</a><a href="#licenses">ライセンス</a><a href="#help">ヘルプ</a>
       </p>
-
-      <p>店舗情報・営業時間は提供元の掲載内容です。</p>
-
-      <small> Gourmet Map </small>
+      <small>© Gourmet Map</small>
     </footer>
 
-    <!-- ボトムナビゲーション -->
-
-    <nav class="bottom-nav" aria-label="メインナビゲーション">
-      <button type="button" data-page="home">
-        <span aria-hidden="true">⌂</span>
-        ホーム
-      </button>
-
-      <button type="button" data-page="results">
-        <span aria-hidden="true">☷</span>
-        リスト
-      </button>
-
-      <button type="button" data-page="map">
-        <span aria-hidden="true">♧</span>
-        地図
-      </button>
-
-      <button type="button" data-page="favorites">
-        <span aria-hidden="true">♡</span>
-        お気に入り
-      </button>
-
-      <button type="button" data-page="settings">
-        <span aria-hidden="true">⚙</span>
-        設定
-      </button>
+    <!-- =====================================
+         ボトムナビゲーション（スマートフォン・タブレット）
+    ====================================== -->
+    <nav class="gm-bottom-nav lg:tw-hidden" aria-label="メインナビゲーション">
+      <a href="#home" data-nav="home"><i class="fa-solid fa-house" aria-hidden="true"></i><span>ホーム</span></a>
+      <a href="#results" data-nav="results"><i class="fa-solid fa-list" aria-hidden="true"></i><span>リスト</span></a>
+      <a href="#map" data-nav="map"><i class="fa-regular fa-map" aria-hidden="true"></i><span>地図</span></a>
+      <a href="#favorites" data-nav="favorites"><i class="fa-regular fa-heart" aria-hidden="true"></i><span>お気に入り</span></a>
+      <a href="#settings" data-nav="settings"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>設定</span></a>
     </nav>
 
+    <div id="toast-container" class="gm-toast-container"></div>
+
+    <!-- =====================================
+         SCR-06 店舗詳細モーダル
+    ====================================== -->
+    <div class="modal fade gm-modal" id="shop-modal" tabindex="-1" aria-labelledby="shop-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+          <div class="gm-shop-hero">
+            <div id="shop-hero"></div>
+            <button type="button" class="gm-hero-close" data-bs-dismiss="modal" aria-label="店舗詳細を閉じる">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="tw-flex tw-items-start tw-justify-between tw-gap-3">
+              <h2 id="shop-title" class="modal-title gm-shop-modal-title" tabindex="-1"></h2>
+              <button type="button" id="shop-favorite" class="gm-heart-btn" hidden></button>
+            </div>
+            <ul id="shop-genres" class="gm-chip-row tw-my-2" aria-label="ジャンル"></ul>
+            <p id="shop-catch" class="tw-mb-3"></p>
+
+            <ul id="shop-info" class="gm-info-list"></ul>
+
+            <ul id="shop-features" class="gm-feature-grid" aria-label="主な設備・サービス"></ul>
+
+            <h3 class="gm-section-title tw-mt-4">お店の詳細</h3>
+            <dl id="shop-details" class="gm-detail-dl"></dl>
+
+            <p id="shop-fetched" class="gm-help tw-mt-3"></p>
+
+            <div id="shop-share-panel" class="gm-share-panel" hidden>
+              <h3 class="gm-section-title">店舗を共有</h3>
+              <p class="gm-help">共有されるのは店舗のURLのみです。登録地点や検索条件は共有されません。</p>
+              <ul class="gm-share-list">
+                <li><button type="button" id="share-line"><span class="gm-share-icon gm-share-line" aria-hidden="true"><i class="fa-brands fa-line"></i></span>LINEで共有<span class="visually-hidden">（新しいタブで開く）</span></button></li>
+                <li><button type="button" id="share-copy"><span class="gm-share-icon" aria-hidden="true"><i class="fa-solid fa-link"></i></span>リンクをコピー</button></li>
+                <li><button type="button" id="share-qr" aria-expanded="false" aria-controls="share-qr-area"><span class="gm-share-icon" aria-hidden="true"><i class="fa-solid fa-qrcode"></i></span>QRコードを表示</button></li>
+                <li><button type="button" id="share-native"><span class="gm-share-icon" aria-hidden="true"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>その他のアプリで共有</button></li>
+              </ul>
+              <div id="share-qr-area" class="gm-qr-area" hidden>
+                <img id="share-qr-image" alt="" width="200" height="200" />
+                <p class="gm-help tw-m-0">スマートフォンのカメラで読み取ると、ホットペッパーグルメの店舗ページを開けます。</p>
+              </div>
+              <div id="share-url-field" hidden>
+                <label for="share-url" class="gm-label">店舗リンク（選択してコピーしてください）</label>
+                <input type="url" id="share-url" class="gm-input" readonly />
+              </div>
+            </div>
+
+            <p id="shop-message" class="gm-help tw-mb-0" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="modal-footer gm-shop-actions" id="shop-actions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================
+         SCR-11 詳細絞り込み（ボトムシート）
+    ====================================== -->
+    <div class="offcanvas offcanvas-bottom gm-sheet" tabindex="-1" id="filter-sheet" aria-labelledby="filter-title">
+      <div class="gm-sheet-handle" aria-hidden="true"></div>
+      <div class="offcanvas-header">
+        <h2 class="offcanvas-title gm-card-title tw-m-0" id="filter-title">詳細な条件で絞り込む</h2>
+        <button type="button" class="gm-icon-btn tw-ml-auto" data-bs-dismiss="offcanvas" aria-label="絞り込みを閉じる">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="offcanvas-body">
+        <form id="filter-form" class="tw-grid tw-gap-5" novalidate>
+          <div>
+            <label for="filter-keyword" class="gm-label">キーワード（店名・読みかな）</label>
+            <div class="gm-select-wrap">
+              <i class="fa-solid fa-magnifying-glass gm-input-icon" aria-hidden="true"></i>
+              <input type="search" id="filter-keyword" class="gm-input gm-input-with-icon" maxlength="150" autocomplete="off" placeholder="カフェ、イタリアンなど" />
+            </div>
+          </div>
+
+          <div>
+            <div class="tw-flex tw-items-center tw-justify-between">
+              <label for="radius-range" class="gm-label tw-mb-0">距離（登録した場所から）</label>
+              <output id="radius-output" for="radius-range" class="tw-font-bold tw-text-primary">〜3km</output>
+            </div>
+            <input type="range" id="radius-range" class="gm-range" min="0" max="6" step="1" value="6" />
+            <div class="gm-range-labels" aria-hidden="true">
+              <span>300m</span><span>1km</span><span>2km</span><span>3km</span>
+            </div>
+          </div>
+
+          <fieldset>
+            <legend class="gm-label tw-flex tw-items-center tw-justify-between tw-w-full">
+              <span>ジャンル（複数選択可）</span>
+            </legend>
+            <div class="tw-flex tw-gap-2 tw-mb-2">
+              <button type="button" id="select-all-genres" class="gm-btn gm-btn-ghost gm-btn-sm">すべて選択</button>
+              <button type="button" id="clear-genres" class="gm-btn gm-btn-ghost gm-btn-sm">すべて解除</button>
+            </div>
+            <div id="genre-options" class="gm-toggle-chips"></div>
+            <button type="button" id="genre-more" class="gm-btn gm-btn-ghost gm-btn-sm tw-mt-2" aria-expanded="false" hidden>
+              もっと見る<i class="fa-solid fa-chevron-down tw-ml-1" aria-hidden="true"></i>
+            </button>
+            <p id="genre-note" class="gm-help tw-mb-0"></p>
+          </fieldset>
+
+          <fieldset>
+            <legend class="gm-label">こだわり条件（すべてを満たす店舗）</legend>
+            <div id="condition-options" class="gm-check-grid"></div>
+            <p class="gm-help tw-mb-0">掲載情報で「あり」と判定できる店舗のみが一致します。飲料プランはノンアルコール提供が明記されたもののみ対象です。</p>
+          </fieldset>
+
+          <div class="gm-switch-row form-check form-switch tw-m-0">
+            <label class="form-check-label" for="favorite-only">
+              <span class="gm-setting-label">お気に入りのみ表示</span>
+              <span id="favorite-only-note" class="gm-help tw-block tw-m-0"></span>
+            </label>
+            <input class="form-check-input" type="checkbox" role="switch" id="favorite-only" />
+          </div>
+        </form>
+      </div>
+
+      <div class="gm-sheet-footer">
+        <button type="submit" form="filter-form" id="filter-apply" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full">
+          この条件で検索
+        </button>
+        <button type="button" id="reset-filters" class="gm-btn gm-btn-outline tw-w-full">
+          条件をクリア
+        </button>
+      </div>
+    </div>
+
+    <!-- =====================================
+         SCR-08／09／10 地点の登録・編集・地図選択
+    ====================================== -->
+    <div class="modal fade gm-modal" id="location-modal" tabindex="-1" aria-labelledby="location-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title gm-card-title tw-m-0" id="location-title" tabindex="-1">地点の登録</h2>
+            <button type="button" class="gm-icon-btn tw-ml-auto" data-bs-dismiss="modal" aria-label="地点の登録を閉じる">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="modal-body tw-grid tw-gap-4">
+            <fieldset>
+              <legend class="gm-label">登録方法を選ぶ</legend>
+              <div class="gm-method-grid">
+                <input type="radio" class="btn-check" name="location-method" id="method-address" value="address" checked />
+                <label for="method-address"><i class="fa-solid fa-house" aria-hidden="true"></i>住所</label>
+                <input type="radio" class="btn-check" name="location-method" id="method-station" value="station" />
+                <label for="method-station"><i class="fa-solid fa-train-subway" aria-hidden="true"></i>駅名</label>
+                <input type="radio" class="btn-check" name="location-method" id="method-gps" value="gps" />
+                <label for="method-gps"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>現在地</label>
+                <input type="radio" class="btn-check" name="location-method" id="method-map" value="map" />
+                <label for="method-map"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>地図</label>
+                <input type="radio" class="btn-check" name="location-method" id="method-coords" value="coords" />
+                <label for="method-coords"><i class="fa-solid fa-keyboard" aria-hidden="true"></i>緯度・経度</label>
+              </div>
+            </fieldset>
+
+            <!-- 住所・駅名 -->
+            <div id="panel-search" class="gm-method-panel">
+              <label for="address-query" class="gm-label" id="address-query-label">住所</label>
+              <div class="tw-flex tw-gap-2">
+                <input type="search" id="address-query" class="gm-input" maxlength="100" autocomplete="off" placeholder="例：東京都千代田区丸の内1-9-1" aria-describedby="address-query-hint" />
+                <button type="button" id="search-address" class="gm-btn gm-btn-primary tw-shrink-0">
+                  <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>検索
+                </button>
+              </div>
+              <p id="address-query-hint" class="gm-help">入力内容は候補の検索のみに使用し、記録しません。</p>
+              <ul id="location-candidates" class="gm-candidate-list" aria-label="地点候補"></ul>
+              <p class="gm-help tw-mb-0">
+                Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a>（© OpenStreetMap contributors）
+              </p>
+            </div>
+
+            <!-- 現在地 -->
+            <div id="panel-gps" class="gm-method-panel" hidden>
+              <p class="tw-mb-2">ボタンを押したときに一度だけ現在地を取得します。位置情報を継続して追跡することはありません。</p>
+              <button type="button" id="use-gps" class="gm-btn gm-btn-outline-primary">
+                <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>現在地を取得
+              </button>
+            </div>
+
+            <!-- 地図 -->
+            <div id="panel-map" class="gm-method-panel" hidden>
+              <p class="tw-m-0">下の地図をクリック（タップ）するか、ピンをドラッグして地点を選んでください。地図を使えない場合は「緯度・経度」から入力できます。</p>
+            </div>
+
+            <!-- 緯度・経度 -->
+            <div id="panel-coords" class="gm-method-panel" hidden>
+              <p class="tw-m-0">世界測地系（WGS84）の10進数で入力してください（例：緯度 35.681236、経度 139.767125）。日本国内の地点のみ登録できます。</p>
+            </div>
+
+            <form id="location-form" class="tw-grid tw-gap-3" novalidate>
+              <div id="location-map-wrap" hidden>
+                <h3 class="gm-section-title">位置の確認</h3>
+                <div id="location-map" class="gm-map gm-map-sm"></div>
+                <p class="gm-help tw-mb-0">円は半径3kmの検索範囲の目安です。地図をクリックすると位置を微調整できます。</p>
+              </div>
+
+              <div class="tw-grid tw-gap-3 sm:tw-grid-cols-2">
+                <div>
+                  <label for="latitude" class="gm-label">緯度</label>
+                  <input type="number" id="latitude" class="gm-input" step="any" inputmode="decimal" required aria-describedby="coord-error" />
+                </div>
+                <div>
+                  <label for="longitude" class="gm-label">経度</label>
+                  <input type="number" id="longitude" class="gm-input" step="any" inputmode="decimal" required aria-describedby="coord-error" />
+                </div>
+              </div>
+              <p id="coord-error" class="gm-error-text" hidden></p>
+
+              <p id="location-address" class="gm-help tw-m-0"></p>
+
+              <div>
+                <label for="location-name" class="gm-label">地点名 <span class="gm-required">必須</span></label>
+                <input id="location-name" class="gm-input" maxlength="80" required autocomplete="off" placeholder="例：自宅、職場、東京駅" aria-describedby="location-name-error" />
+                <p id="location-name-error" class="gm-error-text" hidden></p>
+              </div>
+
+              <p id="location-message" class="gm-help tw-m-0" role="status" aria-live="polite"></p>
+
+              <button type="submit" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full">
+                <i class="fa-solid fa-check" aria-hidden="true"></i>この地点を保存
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================
+         SCR-01 初回利用案内・規約同意
+    ====================================== -->
+    <div class="modal fade gm-modal" id="consent-modal" tabindex="-1" aria-labelledby="consent-heading" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+          <div class="modal-body gm-onboarding">
+            <h2 id="consent-heading" class="visually-hidden" tabindex="-1">グルメマップの初回案内</h2>
+
+            <div class="gm-step" data-step="1">
+              <div class="gm-step-art" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></div>
+              <h3>グルメマップへようこそ！</h3>
+              <p>いつもの場所から半径3km以内の<br />おいしいお店を見つけましょう。</p>
+            </div>
+
+            <div class="gm-step" data-step="2" hidden>
+              <div class="gm-step-art" aria-hidden="true"><i class="fa-solid fa-house-chimney"></i></div>
+              <h3>① よく使う場所を登録</h3>
+              <p>住所・駅名・現在地・地図・緯度経度から登録できます。職場や駅など複数の場所を切り替えて使えます。</p>
+            </div>
+
+            <div class="gm-step" data-step="3" hidden>
+              <div class="gm-step-art" aria-hidden="true"><i class="fa-solid fa-sliders"></i></div>
+              <h3>② 条件で絞り込む</h3>
+              <p>距離・ジャンル・設備で絞り込み、リストと地図で確認できます。よく使う条件はプリセットに保存できます。</p>
+            </div>
+
+            <div class="gm-step" data-step="4" hidden>
+              <div class="gm-step-art" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></div>
+              <h3>③ ご利用前の確認</h3>
+              <ul class="gm-consent-points">
+                <li>登録地点や設定は<strong>この端末内にのみ</strong>保存されます（ログイン不要）。</li>
+                <li>検索時には地点の座標や入力した住所・駅名が、GASを経由して外部サービスに送信されます。</li>
+                <li>店舗情報・営業時間は提供元の掲載内容で、正確性は保証されません。徒歩時間は目安です。</li>
+              </ul>
+              <details class="gm-consent-details">
+                <summary>利用規約を読む</summary>
+                <div id="consent-terms" class="gm-prose"></div>
+              </details>
+              <details class="gm-consent-details">
+                <summary>プライバシーポリシーを読む</summary>
+                <div id="consent-privacy" class="gm-prose"></div>
+              </details>
+              <div class="form-check tw-mt-3">
+                <input class="form-check-input" type="checkbox" id="consent-checkbox" />
+                <label class="form-check-label tw-font-semibold" for="consent-checkbox">
+                  利用規約に同意し、プライバシーポリシーを確認しました
+                </label>
+              </div>
+            </div>
+
+            <ol class="gm-step-dots" aria-label="案内の進行状況">
+              <li data-dot="1"><span class="visually-hidden">ステップ1</span></li>
+              <li data-dot="2"><span class="visually-hidden">ステップ2</span></li>
+              <li data-dot="3"><span class="visually-hidden">ステップ3</span></li>
+              <li data-dot="4"><span class="visually-hidden">ステップ4</span></li>
+            </ol>
+            <p id="consent-progress" class="visually-hidden" aria-live="polite"></p>
+          </div>
+
+          <div class="modal-footer gm-onboarding-footer">
+            <button type="button" id="consent-next" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full">次へ</button>
+            <button type="button" id="accept-consent" class="gm-btn gm-btn-primary gm-btn-lg tw-w-full" disabled hidden>同意して利用を開始</button>
+            <div class="tw-flex tw-w-full tw-justify-between">
+              <button type="button" id="consent-back" class="gm-btn gm-btn-ghost gm-btn-sm" hidden>戻る</button>
+              <button type="button" id="consent-skip" class="gm-btn gm-btn-ghost gm-btn-sm tw-ml-auto">スキップ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================
+         確認ダイアログ
+    ====================================== -->
+    <div class="modal fade gm-modal" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-describedby="confirm-message" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+          <div class="modal-body">
+            <h2 id="confirm-title" class="gm-card-title"></h2>
+            <p id="confirm-message" class="tw-mb-2"></p>
+            <p id="confirm-detail" class="gm-help tw-mb-0" hidden></p>
+          </div>
+          <div class="modal-footer gm-dialog-footer">
+            <button type="button" id="confirm-cancel" class="gm-btn gm-btn-outline" data-bs-dismiss="modal">キャンセル</button>
+            <button type="button" id="confirm-ok" class="gm-btn gm-btn-primary">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================
+         入力ダイアログ
+    ====================================== -->
+    <div class="modal fade gm-modal" id="prompt-modal" tabindex="-1" aria-labelledby="prompt-title" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <form id="prompt-form" class="modal-content" novalidate>
+          <div class="modal-body">
+            <h2 id="prompt-title" class="gm-card-title"></h2>
+            <label for="prompt-input" id="prompt-label" class="gm-label"></label>
+            <input type="text" id="prompt-input" class="gm-input" autocomplete="off" aria-describedby="prompt-hint prompt-error" />
+            <p id="prompt-hint" class="gm-help tw-mb-0" hidden></p>
+            <p id="prompt-error" class="gm-error-text tw-mb-0" role="alert"></p>
+          </div>
+          <div class="modal-footer gm-dialog-footer">
+            <button type="button" class="gm-btn gm-btn-outline" data-bs-dismiss="modal">キャンセル</button>
+            <button type="submit" id="prompt-ok" class="gm-btn gm-btn-primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <noscript>
-      このアプリを利用するには JavaScriptを有効にしてください。
+      <div class="gm-noscript">
+        このアプリを利用するには JavaScript を有効にしてください。
+      </div>
     </noscript>
   </body>
 </html>

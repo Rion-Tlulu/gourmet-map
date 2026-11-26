@@ -1,3 +1,9 @@
+/**
+ * 運用管理（スプレッドシート・監視・通知・保守）
+ * ※ 管理者のみ実行。公開Webアプリから呼び出される操作はない（SYS-01）。
+ * ※ Script Properties のヘルパー（getProperty_ 等）は Code.gs に定義。
+ */
+
 const OPS_SHEETS = Object.freeze({
   "01_基本設定": ["設定キー", "値", "型", "説明", "更新日時"],
 
@@ -7,14 +13,7 @@ const OPS_SHEETS = Object.freeze({
 
   "04_メンテナンス": ["ID", "開始日時", "終了日時", "対象", "状態", "公開案内"],
 
-  "05_API利用管理": [
-    "集計日",
-    "API名",
-    "呼出数",
-    "成功数",
-    "失敗数",
-    "制限到達",
-  ],
+  "05_API利用管理": ["集計日", "API名", "呼出数", "成功数", "失敗数", "制限到達"],
 
   "06_エラーログ": ["日時", "requestId", "エラー分類", "処理名", "安全な要約"],
 
@@ -29,6 +28,15 @@ const OPS_SHEETS = Object.freeze({
   "11_リリース履歴": ["バージョン", "日付", "変更概要", "確認結果"],
 });
 
+// 機能フラグの初期値（09_機能管理）
+const DEFAULT_FEATURE_FLAGS = Object.freeze([
+  ["service", true],
+  ["search", true],
+  ["geocode", true],
+  // お気に入りIDの長期保存は規約確認後に TRUE にする（FAV-01）
+  ["favorites", false],
+]);
+
 /* ========================================
    01. スプレッドシート取得
 ======================================== */
@@ -38,7 +46,7 @@ function spreadsheet_() {
 }
 
 /* ========================================
-   02. 初期セットアップ
+   02. 初期セットアップ（管理者が一度だけ実行）
 ======================================== */
 
 function setupOperations() {
@@ -46,7 +54,9 @@ function setupOperations() {
 
   ss.setSpreadsheetTimeZone("Asia/Tokyo");
 
-  for (const [name, headers] of Object.entries(OPS_SHEETS)) {
+  Object.keys(OPS_SHEETS).forEach(function (name) {
+    const headers = OPS_SHEETS[name];
+
     let sheet = ss.getSheetByName(name);
 
     if (!sheet) {
@@ -66,27 +76,41 @@ function setupOperations() {
       .setFontWeight("bold");
 
     sheet.autoResizeColumns(1, headers.length);
+  });
+
+  const flags = ss.getSheetByName("09_機能管理");
+
+  if (flags.getLastRow() < 2) {
+    flags
+      .getRange(2, 1, DEFAULT_FEATURE_FLAGS.length, 3)
+      .setValues(
+        DEFAULT_FEATURE_FLAGS.map(function (row) {
+          return [row[0], row[1], new Date()];
+        }),
+      );
   }
 
   SpreadsheetApp.flush();
 }
 
 /* ========================================
-   03. 安全な書き込み
+   03. 安全な書き込み（数式注入の防止：OPS-D03）
 ======================================== */
 
 function safeCell_(value) {
-  if (typeof value === "string" && /^[\s]*[=+\-@]/.test(value)) {
+  if (typeof value === "string" && /^[\s]*[=+\-@\t\r]/.test(value)) {
     return "'" + value;
   }
 
   return value;
 }
 
-function appendRow_(sheetName, row) {
-  if (!Object.hasOwn(OPS_SHEETS, sheetName)) {
+function appendRows_(sheetName, rows) {
+  if (!Object.prototype.hasOwnProperty.call(OPS_SHEETS, sheetName)) {
     throw new Error("ERR_CONFIG");
   }
+
+  if (!rows.length) return;
 
   const lock = LockService.getScriptLock();
 
@@ -99,7 +123,11 @@ function appendRow_(sheetName, row) {
       throw new Error("ERR_CONFIG");
     }
 
-    sheet.appendRow(row.map(safeCell_));
+    const values = rows.map(function (row) {
+      return row.map(safeCell_);
+    });
+
+    sheet.getRange(sheet.getLastRow() + 1, 1, values.length, values[0].length).setValues(values);
 
     SpreadsheetApp.flush();
   } finally {
@@ -107,39 +135,36 @@ function appendRow_(sheetName, row) {
   }
 }
 
+function appendRow_(sheetName, row) {
+  appendRows_(sheetName, [row]);
+}
+
 /* ========================================
-   04. エラーログ
+   04. エラーログ（個人を識別しない情報のみ：SEC-07）
 ======================================== */
 
 function writeSafeError_(requestId, action, errorCode) {
-  const allowedActions = [
-    "status",
-    "search",
-    "geocode",
-    "favorites",
-    "unknown",
-  ];
+  // 入力ミスや利用制限は件数が多くなりやすいため記録しない
+  if (errorCode === "ERR_INPUT" || errorCode === "ERR_RATE_LIMIT") return;
 
-  const safeAction = allowedActions.includes(action) ? action : "unknown";
+  const allowedActions = ["status", "search", "geocode", "favorites", "unknown"];
+
+  const safeAction = allowedActions.indexOf(action) >= 0 ? action : "unknown";
 
   const safeCode = /^ERR_[A-Z_]+$/.test(errorCode) ? errorCode : "ERR_API";
 
+  const safeId = /^[0-9a-f]{1,32}$/.test(requestId) ? requestId : "unknown";
+
   try {
-    appendRow_("06_エラーログ", [
-      new Date(),
-      requestId,
-      safeCode,
-      safeAction,
-      "リクエスト処理に失敗",
-    ]);
-  } catch {
+    appendRow_("06_エラーログ", [new Date(), safeId, safeCode, safeAction, "リクエスト処理に失敗"]);
+  } catch (error) {
     // ログの失敗でAPI応答を停止させない
     console.warn("ERR_LOG_WRITE");
   }
 }
 
 /* ========================================
-   05. 管理者通知
+   05. 管理者通知（MON-03）
 ======================================== */
 
 function notifyAdmin_(subject, body) {
@@ -151,11 +176,11 @@ function notifyAdmin_(subject, body) {
     MailApp.sendEmail({
       to: email,
       subject: "[Gourmet Map] " + subject,
-      body,
+      body: body,
     });
 
     return true;
-  } catch {
+  } catch (error) {
     console.warn("ERR_NOTIFICATION");
 
     return false;
@@ -163,16 +188,54 @@ function notifyAdmin_(subject, body) {
 }
 
 /* ========================================
-   06. API集計
+   06. API利用量の集計（05_API利用管理）
 ======================================== */
 
+function upsertUsageRow_(sheet, usage) {
+  const limit = numberProperty_("DAILY_API_LIMIT", DEFAULTS.DAILY_API_LIMIT);
+
+  const values = [
+    usage.date,
+    "外部API合計",
+    usage.count,
+    usage.success,
+    usage.failure,
+    usage.limitHit > 0 || usage.count >= limit ? "到達" : "",
+  ];
+
+  const rows = sheet.getDataRange().getValues();
+
+  const index = rows.findIndex(function (row, i) {
+    return i > 0 && String(row[0]) === usage.date && row[1] === "外部API合計";
+  });
+
+  if (index >= 0) {
+    sheet.getRange(index + 1, 1, 1, values.length).setValues([values]);
+  } else {
+    const rowNumber = sheet.getLastRow() + 1;
+
+    sheet.getRange(rowNumber, 1).setNumberFormat("@");
+    sheet.getRange(rowNumber, 1, 1, values.length).setValues([values]);
+  }
+}
+
 function recordApiUsage() {
-  const date = getProperty_("USAGE_DATE");
+  const props = properties_();
 
-  const count = Number(getProperty_("USAGE_COUNT", "0"));
+  const current = {
+    date: props.getProperty("USAGE_DATE"),
+    count: Number(props.getProperty("USAGE_COUNT") || "0"),
+    success: Number(props.getProperty("USAGE_SUCCESS") || "0"),
+    failure: Number(props.getProperty("USAGE_FAILURE") || "0"),
+    limitHit: Number(props.getProperty("USAGE_LIMIT_HIT") || "0"),
+  };
 
-  if (!date || !Number.isSafeInteger(count)) {
-    return;
+  let previous = null;
+
+  try {
+    previous = JSON.parse(props.getProperty("USAGE_PREV") || "null");
+  } catch (error) {
+    previous = null;
   }
 
   const lock = LockService.getScriptLock();
@@ -182,44 +245,77 @@ function recordApiUsage() {
   try {
     const sheet = spreadsheet_().getSheetByName("05_API利用管理");
 
-    const rows = sheet.getDataRange().getValues();
+    if (previous && previous.date) {
+      upsertUsageRow_(sheet, previous);
+      props.deleteProperty("USAGE_PREV");
+    }
 
-    const existingIndex = rows.findIndex(
-      (row, index) =>
-        index > 0 && String(row[0]) === date && row[1] === "外部API合計",
-    );
-
-    const limit = Number(getProperty_("DAILY_API_LIMIT", "100"));
-
-    const values = [
-      date,
-      "外部API合計",
-      count,
-      "未集計",
-      "未集計",
-      count >= limit,
-    ];
-
-    if (existingIndex >= 0) {
-      sheet
-        .getRange(existingIndex + 1, 1, 1, values.length)
-        .setValues([values]);
-    } else {
-      const rowNumber = sheet.getLastRow() + 1;
-
-      sheet.getRange(rowNumber, 1).setNumberFormat("@");
-
-      sheet.getRange(rowNumber, 1, 1, values.length).setValues([values]);
+    if (current.date) {
+      upsertUsageRow_(sheet, current);
     }
 
     SpreadsheetApp.flush();
   } finally {
     lock.releaseLock();
   }
+
+  // 上限接近の警告（PER-04）
+  const limit = numberProperty_("DAILY_API_LIMIT", DEFAULTS.DAILY_API_LIMIT);
+
+  if (current.date && current.count >= limit * 0.8) {
+    const warnedKey = "USAGE_WARNED_" + current.date;
+
+    if (!props.getProperty(warnedKey)) {
+      props.setProperty(warnedKey, "1");
+
+      notifyAdmin_(
+        "API利用量の上限接近",
+        "本日の外部API呼出数が上限の80%を超えました（" + current.count + " / " + limit + "）。",
+      );
+    }
+  }
 }
 
 /* ========================================
-   07. URLの検証
+   07. 機能別利用統計（08_利用統計：前日以前を転記）
+======================================== */
+
+function flushUsageStats_() {
+  const props = properties_();
+
+  const all = props.getProperties();
+
+  const today = today_();
+
+  const rows = [];
+
+  const done = [];
+
+  Object.keys(all).forEach(function (key) {
+    const match = /^STAT_(\d{4}-\d{2}-\d{2})_([a-z]+)$/.exec(key);
+
+    if (match && match[1] < today) {
+      rows.push([match[1], match[2], Number(all[key]) || 0]);
+      done.push(key);
+    }
+
+    // 前日分の警告フラグも削除
+    if (/^USAGE_WARNED_/.test(key) && key.slice(13) < today) {
+      done.push(key);
+    }
+  });
+
+  if (rows.length) {
+    appendRows_("08_利用統計", rows);
+  }
+
+  done.forEach(function (key) {
+    props.deleteProperty(key);
+  });
+}
+
+/* ========================================
+   08. URLの検証
 ======================================== */
 
 function monitoringUrl_(key) {
@@ -232,11 +328,7 @@ function monitoringUrl_(key) {
   }
 
   if (key === "WEB_APP_URL") {
-    if (
-      !/^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(
-        url,
-      )
-    ) {
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(url)) {
       throw new Error("ERR_CONFIG");
     }
   }
@@ -245,7 +337,7 @@ function monitoringUrl_(key) {
 }
 
 /* ========================================
-   08. 稼働監視
+   09. 稼働監視（MON-01／MON-02）
 ======================================== */
 
 function monitorUrl_(service, key) {
@@ -264,24 +356,18 @@ function monitorUrl_(service, key) {
         const result = JSON.parse(response.getContentText());
 
         status =
-          result.ok === true && result.data?.service === "Gourmet Map API"
+          result.ok === true && result.data && result.data.service === SERVICE_NAME
             ? "success"
             : "failure";
       } else {
         status = "success";
       }
     }
-  } catch {
+  } catch (error) {
     status = "failure";
   }
 
-  appendRow_("07_稼働記録", [
-    new Date(),
-    service,
-    status,
-    Date.now() - started,
-    "定期監視",
-  ]);
+  appendRow_("07_稼働記録", [new Date(), service, status, Date.now() - started, "定期監視"]);
 
   updateIncident_(service, status);
 }
@@ -293,21 +379,31 @@ function healthCheck() {
 
   const started = Date.now();
 
-  const sheet = spreadsheet_().getSheetByName("01_基本設定");
+  let sheetStatus = "failure";
 
-  appendRow_("07_稼働記録", [
-    new Date(),
-    "Spreadsheet",
-    sheet ? "success" : "failure",
-    Date.now() - started,
-    "シート確認",
-  ]);
+  try {
+    sheetStatus = spreadsheet_().getSheetByName("01_基本設定") ? "success" : "failure";
+  } catch (error) {
+    sheetStatus = "failure";
+  }
+
+  appendRow_("07_稼働記録", [new Date(), "Spreadsheet", sheetStatus, Date.now() - started, "シート確認"]);
+
+  // 外部APIは通常通信の結果（サーキットブレーカー）を記録
+  ["hotpepper", "geoapify"].forEach(function (name) {
+    const status = circuitOpen_(name) ? "failure" : "success";
+
+    appendRow_("07_稼働記録", [new Date(), name === "hotpepper" ? "ホットペッパーAPI" : "Geoapify", status, "", "通常通信の結果"]);
+  });
 
   recordApiUsage();
+
+  // ステータス画面のキャッシュを更新
+  CacheService.getScriptCache().remove("status:v1");
 }
 
 /* ========================================
-   09. 障害・復旧通知
+   10. 障害・復旧通知（重複通知の抑止）
 ======================================== */
 
 function updateIncident_(service, status) {
@@ -322,14 +418,7 @@ function updateIncident_(service, status) {
   if (status === "failure") {
     const incidentId = Utilities.getUuid();
 
-    appendRow_("10_障害管理", [
-      incidentId,
-      service,
-      new Date(),
-      "",
-      "障害",
-      "接続状態を確認中",
-    ]);
+    appendRow_("10_障害管理", [incidentId, service, new Date(), "", "障害", "接続状態を確認中"]);
 
     properties_().setProperty(idKey, incidentId);
 
@@ -343,12 +432,12 @@ function updateIncident_(service, status) {
 
     const rows = sheet.getDataRange().getValues();
 
-    const index = rows.findIndex((row) => row[0] === incidentId);
+    const index = rows.findIndex(function (row) {
+      return row[0] === incidentId;
+    });
 
     if (index > 0) {
-      sheet
-        .getRange(index + 1, 4, 1, 3)
-        .setValues([[new Date(), "復旧", "接続確認成功"]]);
+      sheet.getRange(index + 1, 4, 1, 3).setValues([[new Date(), "復旧", "接続確認成功"]]);
     }
 
     properties_().deleteProperty(idKey);
@@ -360,9 +449,10 @@ function updateIncident_(service, status) {
 }
 
 /* ========================================
-   10. ログの保存期間管理
+   11. ログの保存期間管理（OPS-D04）
 ======================================== */
 
+// 行は時系列で追記されるため、先頭から期限切れの行をまとめて削除
 function deleteExpiredRows_(name, days) {
   if (!Number.isInteger(days) || days < 1) {
     throw new Error("ERR_CONFIG");
@@ -378,12 +468,20 @@ function deleteExpiredRows_(name, days) {
 
   const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
 
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const date = new Date(rows[i][0]);
+  let expired = 0;
 
-    if (Number.isFinite(date.getTime()) && date.getTime() < cutoff) {
-      sheet.deleteRow(i + 2);
+  for (let i = 0; i < rows.length; i++) {
+    const time = new Date(rows[i][0]).getTime();
+
+    if (Number.isFinite(time) && time < cutoff) {
+      expired = i + 1;
+    } else if (Number.isFinite(time)) {
+      break;
     }
+  }
+
+  if (expired > 0) {
+    sheet.deleteRows(2, expired);
   }
 }
 
@@ -407,18 +505,14 @@ function cleanupLogs() {
 }
 
 /* ========================================
-   11. バックアップ
+   12. バックアップ（MON-04／MON-07）
 ======================================== */
 
 function backupManagementData() {
   const folder = DriveApp.getFolderById(requireProperty_("BACKUP_FOLDER_ID"));
 
-  // フォルダの共有設定は別途手動確認する
-  const stamp = Utilities.formatDate(
-    new Date(),
-    "Asia/Tokyo",
-    "yyyyMMdd_HHmmss",
-  );
+  // フォルダの共有設定は別途手動確認する（一般公開しない）
+  const stamp = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd_HHmmss");
 
   DriveApp.getFileById(requireProperty_("SPREADSHEET_ID")).makeCopy(
     "GourmetMap_Backup_" + stamp,
@@ -442,36 +536,44 @@ function cleanupBackups() {
   while (files.hasNext()) {
     const file = files.next();
 
-    if (
-      file.getName().startsWith("GourmetMap_Backup_") &&
-      file.getDateCreated().getTime() < cutoff
-    ) {
+    if (file.getName().indexOf("GourmetMap_Backup_") === 0 && file.getDateCreated().getTime() < cutoff) {
       file.setTrashed(true);
     }
   }
 }
 
 /* ========================================
-   12. 日次レポート
+   13. 日次処理・レポート（MON-04）
 ======================================== */
 
 function dailyMaintenance() {
-  recordApiUsage();
+  const results = [];
 
-  cleanupLogs();
+  function step(label, callback) {
+    try {
+      callback();
+      results.push(label + "：実施");
+    } catch (error) {
+      results.push(label + "：失敗（" + (/^ERR_[A-Z_]+$/.test(error.message) ? error.message : "ERR_UNKNOWN") + "）");
+    }
+  }
 
-  backupManagementData();
+  step("API利用量の集計", recordApiUsage);
+  step("機能別利用統計の転記", flushUsageStats_);
+  step("ログの期限削除", cleanupLogs);
+  step("管理データのバックアップ", backupManagementData);
+  step("古いバックアップの削除", cleanupBackups);
 
-  cleanupBackups();
+  const props = properties_();
 
   const body = [
     "グルメマップ 日次運用レポート",
     "",
-    "対象日：" + getProperty_("USAGE_DATE", "未集計"),
-    "外部API呼出数：" + getProperty_("USAGE_COUNT", "0"),
+    "集計日：" + (props.getProperty("USAGE_DATE") || "未集計"),
+    "外部API呼出数：" + (props.getProperty("USAGE_COUNT") || "0"),
+    "成功：" + (props.getProperty("USAGE_SUCCESS") || "0") + "／失敗：" + (props.getProperty("USAGE_FAILURE") || "0"),
     "",
-    "ログ期限管理：実施",
-    "管理データバックアップ：実施",
+    results.join("\n"),
     "",
     "詳細は管理用スプレッドシートをご確認ください。",
   ].join("\n");
@@ -480,17 +582,17 @@ function dailyMaintenance() {
 }
 
 /* ========================================
-   13. 定期実行トリガー
+   14. 定期実行トリガー（管理者が一度だけ実行）
 ======================================== */
 
 function setupTriggers() {
   const targets = ["healthCheck", "dailyMaintenance"];
 
-  for (const trigger of ScriptApp.getProjectTriggers()) {
-    if (targets.includes(trigger.getHandlerFunction())) {
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (targets.indexOf(trigger.getHandlerFunction()) >= 0) {
       ScriptApp.deleteTrigger(trigger);
     }
-  }
+  });
 
   ScriptApp.newTrigger("healthCheck").timeBased().everyMinutes(15).create();
 

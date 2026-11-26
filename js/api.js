@@ -3,10 +3,45 @@
 
   const C = GM.Config;
 
-  function wait(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
+  const GAS_URL_PATTERN =
+    /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
+  // 一時障害のみ再試行する（PER-03）
+  const RETRYABLE = Object.freeze([
+    "ERR_BUSY",
+    "ERR_TEMPORARY",
+    "ERR_NETWORK",
+    "ERR_TIMEOUT",
+  ]);
+
+  function abortError() {
+    return new DOMException("Aborted", "AbortError");
+  }
+
+  // 中断可能な待機
+  function wait(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(abortError());
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      }, ms);
+
+      function onAbort() {
+        clearTimeout(timer);
+        reject(abortError());
+      }
+
+      signal?.addEventListener("abort", onAbort, { once: true });
     });
+  }
+
+  function isConfigured() {
+    return GAS_URL_PATTERN.test(C.GAS_URL);
   }
 
   async function requestOnce(action, params, signal) {
@@ -14,9 +49,7 @@
 
     const abort = () => controller.abort();
 
-    signal?.addEventListener("abort", abort, {
-      once: true,
-    });
+    signal?.addEventListener("abort", abort, { once: true });
 
     if (signal?.aborted) abort();
 
@@ -24,26 +57,24 @@
 
     const timer = setTimeout(() => {
       timedOut = true;
-
       controller.abort();
     }, C.REQUEST_TIMEOUT_MS);
 
     try {
+      // text/plain でプリフライトを発生させない（GASのCORS制約）
       const response = await fetch(C.GAS_URL, {
         method: "POST",
-
         headers: {
           "Content-Type": "text/plain;charset=UTF-8",
         },
-
         body: JSON.stringify({
           ...params,
           action,
         }),
-
         redirect: "follow",
         credentials: "omit",
-
+        cache: "no-store",
+        referrerPolicy: "no-referrer",
         signal: controller.signal,
       });
 
@@ -63,8 +94,15 @@
         throw new Error("ERR_API");
       }
 
+      if (!result || typeof result !== "object") {
+        throw new Error("ERR_API");
+      }
+
+      // GASはHTTP状態を返せないため、応答本文の ok / errorCode で判定（SYS-03）
       if (!result.ok) {
-        const error = new Error(result.errorCode || "ERR_API");
+        const error = new Error(
+          /^ERR_[A-Z_]+$/.test(result.errorCode) ? result.errorCode : "ERR_API",
+        );
 
         error.requestId = result.requestId;
 
@@ -74,7 +112,7 @@
       return result.data;
     } catch (error) {
       if (signal?.aborted) {
-        throw new DOMException("Aborted", "AbortError");
+        throw abortError();
       }
 
       if (timedOut) {
@@ -94,6 +132,10 @@
   }
 
   async function request(action, params = {}, options = {}) {
+    if (!isConfigured()) {
+      throw new Error("ERR_CONFIG");
+    }
+
     // 規約同意前は利用者データを外部送信しない
     if (action !== "status" && !GM.Storage.hasConsent()) {
       throw new Error("ERR_CONSENT");
@@ -103,50 +145,49 @@
       throw new Error("ERR_OFFLINE");
     }
 
-    const retryable = [
-      "ERR_BUSY",
-      "ERR_TEMPORARY",
-      "ERR_NETWORK",
-      "ERR_TIMEOUT",
-    ];
-
     for (let attempt = 0; attempt <= C.MAX_RETRIES; attempt++) {
       if (options.signal?.aborted) {
-        throw new DOMException("Aborted", "AbortError");
+        throw abortError();
       }
 
       try {
         return await requestOnce(action, params, options.signal);
       } catch (error) {
-        if (attempt === C.MAX_RETRIES || !retryable.includes(error.message)) {
+        if (
+          error.name === "AbortError" ||
+          attempt === C.MAX_RETRIES ||
+          !RETRYABLE.includes(error.message)
+        ) {
           throw error;
         }
 
-        const delay = 1200 * Math.pow(2, attempt) + Math.random() * 300;
+        // 指数バックオフ＋ゆらぎ
+        const delay = 1200 * 2 ** attempt + Math.random() * 300;
 
-        await wait(delay);
+        await wait(delay, options.signal);
       }
     }
 
     throw new Error("ERR_API");
   }
 
-  function geocode(query, options) {
-    return request("geocode", { query }, options);
+  function geocode(query, mode, options) {
+    return request("geocode", { query, mode }, options);
   }
 
-  function getStatus() {
-    return request("status");
+  function getStatus(options) {
+    return request("status", {}, options);
   }
 
+  // 現在地は明示操作時のみ一度だけ取得し、継続追跡しない（LOC-03／PRV-01）
   function getCurrentPosition() {
     if (!GM.Storage.hasConsent()) {
       return Promise.reject(new Error("ERR_CONSENT"));
     }
 
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("ERR_LOCATION"));
+      if (!("geolocation" in navigator)) {
+        reject(new Error("ERR_GPS_UNSUPPORTED"));
         return;
       }
 
@@ -154,15 +195,20 @@
         (position) =>
           resolve({
             label: "現在地",
-
             lat: position.coords.latitude,
-
             lng: position.coords.longitude,
-
             source: "gps",
           }),
 
-        () => reject(new Error("ERR_LOCATION")),
+        (error) => {
+          const codes = {
+            1: "ERR_GPS_DENIED",
+            2: "ERR_GPS_UNAVAILABLE",
+            3: "ERR_GPS_TIMEOUT",
+          };
+
+          reject(new Error(codes[error?.code] || "ERR_LOCATION"));
+        },
 
         {
           enableHighAccuracy: false,
@@ -176,6 +222,7 @@
   GM.Api = Object.freeze({
     request,
     wait,
+    isConfigured,
     geocode,
     getStatus,
     getCurrentPosition,
