@@ -7,6 +7,7 @@
   let restaurantMarkers = null;
   let originMarker = null;
   let radiusCircle = null;
+  let radiusLabel = null;
 
   let locationMap = null;
   let pickerMarker = null;
@@ -209,10 +210,48 @@
 
     restaurantMarkers.addTo(restaurantMap);
 
+    addRecenterControl(restaurantMap);
+
     return restaurantMap;
   }
 
-  function showRestaurants(location, shops, radiusM, onSelect, fit = true) {
+  // 登録地点（距離フィルターの円）を中心に戻すボタン
+  function addRecenterControl(map) {
+    const L = getLeaflet();
+
+    const Recenter = L.Control.extend({
+      options: { position: "topleft" },
+
+      onAdd() {
+        const bar = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+        const button = L.DomUtil.create("a", "gm-recenter", bar);
+
+        button.href = "#";
+        button.setAttribute("role", "button");
+        button.setAttribute("aria-label", "登録地点を中心に表示");
+        button.title = "登録地点を中心に表示";
+
+        const icon = L.DomUtil.create("i", "fa-solid fa-location-arrow", button);
+        icon.setAttribute("aria-hidden", "true");
+
+        L.DomEvent.disableClickPropagation(bar);
+
+        L.DomEvent.on(button, "click", (event) => {
+          L.DomEvent.preventDefault(event);
+
+          if (radiusCircle) {
+            map.fitBounds(radiusCircle.getBounds(), { padding: [16, 16] });
+          }
+        });
+
+        return bar;
+      },
+    });
+
+    new Recenter().addTo(map);
+  }
+
+  function showRestaurants(location, shops, radiusM, onSelect, fit = true, onPreview = null) {
     if (!location) {
       throw new Error("ERR_LOCATION");
     }
@@ -225,6 +264,7 @@
 
     originMarker?.remove();
     radiusCircle?.remove();
+    radiusLabel?.remove();
 
     const center = [location.lat, location.lng];
 
@@ -258,6 +298,18 @@
       interactive: false,
     }).addTo(map);
 
+    // 円の上端に「半径○km」のラベル（デザイン③⑤）
+    const label = document.createElement("span");
+
+    label.className = "gm-radius-label";
+    label.textContent = `半径${GM.Search.formatDistance(radiusM)}`;
+
+    radiusLabel = L.marker([location.lat + radiusM / 111320, location.lng], {
+      icon: L.divIcon({ className: "gm-radius-label-wrap", html: label, iconSize: [0, 0] }),
+      interactive: false,
+      keyboard: false,
+    }).addTo(map);
+
     const favorites = new Set(GM.Storage.getFavoriteIds());
 
     const markers = [];
@@ -281,7 +333,12 @@
         keyboard: true,
       });
 
-      marker.bindPopup(createPopup(shop, onSelect));
+      // プレビューカードがある場合はマーカー選択でカード表示、ない場合はポップアップ
+      if (typeof onPreview === "function") {
+        marker.on("click", () => onPreview(shop));
+      } else {
+        marker.bindPopup(createPopup(shop, onSelect));
+      }
 
       markers.push(marker);
     }
@@ -313,6 +370,7 @@
     restaurantMarkers = null;
     originMarker = null;
     radiusCircle = null;
+    radiusLabel = null;
   }
 
   /* ========================================

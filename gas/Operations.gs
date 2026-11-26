@@ -41,8 +41,17 @@ const DEFAULT_FEATURE_FLAGS = Object.freeze([
    01. スプレッドシート取得
 ======================================== */
 
+// URL全体が貼り付けられた場合も /d/〜/ の部分からIDを取り出す
+function spreadsheetId_() {
+  const raw = requireProperty_("SPREADSHEET_ID");
+
+  const match = /\/d\/([A-Za-z0-9_-]{20,})/.exec(raw);
+
+  return match ? match[1] : raw;
+}
+
 function spreadsheet_() {
-  return SpreadsheetApp.openById(requireProperty_("SPREADSHEET_ID"));
+  return SpreadsheetApp.openById(spreadsheetId_());
 }
 
 /* ========================================
@@ -341,6 +350,9 @@ function monitoringUrl_(key) {
 ======================================== */
 
 function monitorUrl_(service, key) {
+  // 監視先URLが未設定の場合はスキップ（ステータス画面では「未確認」）
+  if (!getProperty_(key)) return;
+
   const started = Date.now();
 
   let status = "failure";
@@ -514,7 +526,7 @@ function backupManagementData() {
   // フォルダの共有設定は別途手動確認する（一般公開しない）
   const stamp = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMdd_HHmmss");
 
-  DriveApp.getFileById(requireProperty_("SPREADSHEET_ID")).makeCopy(
+  DriveApp.getFileById(spreadsheetId_()).makeCopy(
     "GourmetMap_Backup_" + stamp,
     folder,
   );
@@ -582,7 +594,96 @@ function dailyMaintenance() {
 }
 
 /* ========================================
-   14. 定期実行トリガー（管理者が一度だけ実行）
+   14. 設定の診断（管理者がエディタで実行）
+   APIキーなどの値は表示せず、設定の有無と状態のみをログに出す
+======================================== */
+
+function diagnose() {
+  const props = properties_();
+
+  const lines = [];
+
+  function present(key) {
+    return props.getProperty(key) ? "設定済み" : "未設定";
+  }
+
+  CacheService.getScriptCache().removeAll(["status:v1", "flags:v1", "maintenance:v1"]);
+
+  lines.push("【必須プロパティ】");
+  ["HOTPEPPER_API_KEY", "GEOAPIFY_API_KEY", "SPREADSHEET_ID"].forEach(function (key) {
+    lines.push("  " + key + "：" + present(key));
+  });
+
+  lines.push("【停止・機能フラグ】");
+  ["SERVICE_STOPPED", "API_ENABLED", "FAVORITES_ENABLED", "CACHE_ENABLED", "DAILY_API_LIMIT"].forEach(function (key) {
+    const value = props.getProperty(key);
+    lines.push("  " + key + "：" + (value === null ? "未設定" : JSON.stringify(value)));
+  });
+
+  let sheetOk = false;
+
+  try {
+    const ss = spreadsheet_();
+    sheetOk = true;
+    const names = ss.getSheets().map(function (sheet) {
+      return sheet.getName();
+    });
+    const missing = Object.keys(OPS_SHEETS).filter(function (name) {
+      return names.indexOf(name) < 0;
+    });
+    lines.push("【スプレッドシート】接続：OK／不足シート：" + (missing.length ? missing.join("、") : "なし"));
+  } catch (error) {
+    const id = props.getProperty("SPREADSHEET_ID") ? spreadsheetId_() : "";
+
+    lines.push("【スプレッドシート】接続：失敗");
+    lines.push(
+      "  IDの形式：" +
+        (/^[A-Za-z0-9_-]{40,50}$/.test(id)
+          ? "OK（" + id.length + "文字）"
+          : "要確認（" + id.length + "文字。URLの /d/ と /edit の間の文字列のみを設定）"),
+    );
+    lines.push("  エラー内容：" + String(error && error.message ? error.message : error).slice(0, 200));
+    lines.push("  確認：①IDの誤り ②このGASを実行しているアカウントにスプレッドシートの編集権限がない ③権限の承認が未完了（エディタで setupOperations を実行して承認）");
+  }
+
+  if (sheetOk) {
+    lines.push("【09_機能管理の解釈結果】" + JSON.stringify(readFeatureFlags_()));
+    lines.push("【04_メンテナンス】" + JSON.stringify(readMaintenance_()));
+  }
+
+  const reason = stopReason_();
+
+  lines.push(
+    "【判定】" +
+      (reason
+        ? "メンテナンス扱い（原因：" +
+          {
+            SERVICE_STOPPED: "Script Properties の SERVICE_STOPPED が有効",
+            API_ENABLED: "Script Properties の API_ENABLED が無効（false 等）",
+            FEATURE_FLAG_SERVICE: "シート「09_機能管理」の service が無効",
+            MAINTENANCE_SHEET: "シート「04_メンテナンス」に実施中の予定がある",
+          }[reason] +
+          "）"
+        : "稼働中（online）"),
+  );
+
+  lines.push("【本日の外部API呼出】" + (props.getProperty("USAGE_COUNT") || "0") + "／上限 " + numberProperty_("DAILY_API_LIMIT", DEFAULTS.DAILY_API_LIMIT));
+
+  lines.push("【トリガー】" + ScriptApp.getProjectTriggers().map(function (trigger) {
+    return trigger.getHandlerFunction();
+  }).join("、"));
+
+  lines.push("※ アプリから接続できない場合は「デプロイを管理」で「アクセスできるユーザー：全員」になっているか確認してください。");
+
+  const report = lines.join(String.fromCharCode(10));
+
+  console.log(report);
+
+  return report;
+}
+
+/* ========================================
+   15. 定期実行トリガー（管理者が一度だけ実行）
 ======================================== */
 
 function setupTriggers() {

@@ -234,8 +234,9 @@
     @apply tw-mb-2 tw-text-base tw-font-extrabold;
   }
 
+  /* グラデーション背景の濃い側でも 4.5:1 以上（axe の手動確認項目で検出：4.24 → 5.98） */
   .gm-eyebrow {
-    @apply tw-mb-2 tw-text-sm tw-font-bold tw-text-primary;
+    @apply tw-mb-2 tw-text-sm tw-font-bold tw-text-accent-ink;
   }
 
   .gm-help {
@@ -561,12 +562,30 @@
     @apply tw-bg-primary tw-text-on-primary;
   }
 
+  /* スマートフォンは1行で横スクロール（デザイン②）、タブレット以上は折り返し */
   .gm-filter-bar {
-    @apply tw-mb-3 tw-flex tw-flex-wrap tw-items-center tw-gap-2;
+    @apply tw-mb-3 tw-flex tw-flex-nowrap tw-items-center tw-gap-2 tw-overflow-x-auto tw-pb-1 md:tw-flex-wrap md:tw-overflow-visible;
+    scrollbar-width: thin;
+  }
+
+  .gm-filter-bar > * {
+    @apply tw-shrink-0;
+  }
+
+  .gm-filter-bar .gm-chip-row {
+    @apply tw-flex-nowrap md:tw-flex-wrap;
+  }
+
+  .gm-filter-bar .gm-chip {
+    @apply tw-whitespace-nowrap;
   }
 
   .gm-results-meta {
-    @apply tw-mb-1 tw-flex tw-flex-wrap tw-items-end tw-justify-between tw-gap-2;
+    @apply tw-mb-1 tw-flex tw-flex-nowrap tw-items-center tw-justify-between tw-gap-2;
+  }
+
+  .gm-results-meta select {
+    @apply tw-max-w-[11rem];
   }
 
   .gm-meta-line {
@@ -772,6 +791,41 @@
     z-index: 0;
   }
 
+  .gm-map-wrap {
+    @apply tw-relative;
+  }
+
+  /* マーカー選択時の店舗プレビュー（地図下部に重ねて表示） */
+  .gm-map-preview {
+    @apply tw-absolute tw-inset-x-3 tw-bottom-3 tw-flex tw-items-center tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-2.5 tw-shadow-lg;
+    z-index: 500;
+  }
+
+  .gm-map-preview img {
+    @apply tw-h-16 tw-w-16 tw-shrink-0 tw-rounded-xl tw-bg-accent tw-object-cover;
+  }
+
+  .gm-map-preview-body {
+    @apply tw-grid tw-min-w-0 tw-flex-1 tw-gap-0.5;
+  }
+
+  .gm-map-preview-name {
+    @apply tw-m-0 tw-truncate tw-text-sm tw-font-extrabold;
+  }
+
+  .gm-map-preview .gm-chip-row {
+    @apply tw-min-w-0 tw-flex-nowrap tw-overflow-hidden;
+  }
+
+  .gm-map-preview .gm-chip {
+    @apply tw-max-w-full tw-truncate;
+    display: block;
+  }
+
+  .gm-map-preview .gm-shop-distance {
+    @apply tw-text-xs;
+  }
+
   .gm-map-sm {
     height: clamp(240px, 40vh, 360px);
   }
@@ -863,6 +917,14 @@
 
   .gm-share-panel {
     @apply tw-mt-4 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface-2 tw-p-3;
+  }
+
+  .gm-share-summary {
+    @apply tw-mb-3 tw-flex tw-items-center tw-gap-3 tw-rounded-xl tw-bg-surface tw-p-2;
+  }
+
+  .gm-share-summary img {
+    @apply tw-h-12 tw-w-12 tw-shrink-0 tw-rounded-lg tw-bg-accent tw-object-cover;
   }
 
   .gm-share-list {
@@ -1036,6 +1098,14 @@
   .gm-step-art {
     @apply tw-mx-auto tw-mb-4 tw-grid tw-h-28 tw-w-28 tw-place-items-center tw-rounded-full tw-text-5xl tw-text-primary;
     background: var(--gm-hero-bg);
+  }
+
+  .gm-step-art-wide {
+    @apply tw-h-auto tw-w-56 tw-rounded-3xl tw-p-4;
+  }
+
+  .gm-step-art-wide svg {
+    @apply tw-block tw-h-auto tw-w-full;
   }
 
   .gm-consent-points {

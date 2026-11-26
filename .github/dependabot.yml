@@ -1,0 +1,16 @@
+# 依存関係の脆弱性・更新チェック（SEC-06）
+# 本プロジェクトは npm を使用しないため、GitHub Actions のみを対象とする。
+# CDN ライブラリ（Bootstrap・Leaflet 等）は index.html で版固定・SRI 付きのため、
+# 定期保守（MON 運用手順）で手動確認する。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5

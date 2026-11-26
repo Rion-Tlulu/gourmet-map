@@ -97,8 +97,13 @@ test("検索：range=5・count=100・datum=world、項目は許可リストで�
 
   assert.equal(result.ok, true);
   assert.equal(result.data.total, 150);
-  assert.equal(result.data.nextStart, 101);
-  assert.equal(result.data.complete, false);
+  assert.equal(result.data.returned, 100);
+  assert.equal(result.data.limitReached, true);
+  // complete は単回取得の成否（SYS-03）
+  assert.equal(result.data.complete, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.total, 150);
+  assert.equal(result.limitReached, true);
   assert.equal(result.data.shops.length, 100);
 
   const shop = result.data.shops[0];
@@ -291,4 +296,38 @@ test("提供元の応答の開始位置が要求と異なる場合は異常", ()
   });
 
   assert.equal(post(gas, { action: "search", lat: 35.6812, lng: 139.7671 }).errorCode, "ERR_API");
+});
+
+/* =================================
+   改定要件（2026/11/26）・設定値の解釈
+================================== */
+
+test("日次上限の初期値は100（101回目の実呼出を防止）", () => {
+  const { gas, fetched } = loadGas({
+    properties: PROPS,
+    fetch: () => ({ status: 200, body: JSON.stringify(hotpepperPage(1, 1, 1)) }),
+  });
+
+  for (let i = 0; i < 100; i++) {
+    assert.equal(post(gas, { action: "search", lat: 35 + i * 0.001, lng: 139.7 }).ok, true);
+  }
+
+  assert.equal(post(gas, { action: "search", lat: 36, lng: 139.7 }).errorCode, "ERR_RATE_LIMIT");
+  assert.equal(fetched.length, 100);
+});
+
+test("フラグ値の表記ゆれ（有効・ TRUE ・空白）を解釈し、誤ってメンテナンスにしない", () => {
+  const { gas } = loadGas({ properties: { ...PROPS, API_ENABLED: " TRUE ", SERVICE_STOPPED: "" } });
+
+  assert.equal(JSON.parse(gas.doGet().text).data.status, "online");
+  assert.equal(gas.parseFlag_("有効"), true);
+  assert.equal(gas.parseFlag_("無効"), false);
+  assert.equal(gas.parseFlag_(""), null);
+  assert.equal(gas.parseFlag_("abc"), null);
+});
+
+test("停止の原因を判定できる（診断用）", () => {
+  assert.equal(loadGas({ properties: { ...PROPS, API_ENABLED: "false" } }).gas.stopReason_(), "API_ENABLED");
+  assert.equal(loadGas({ properties: { ...PROPS, SERVICE_STOPPED: "true" } }).gas.stopReason_(), "SERVICE_STOPPED");
+  assert.equal(loadGas({ properties: PROPS }).gas.stopReason_(), null);
 });

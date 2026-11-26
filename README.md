@@ -60,7 +60,7 @@ test/                 自動テスト（Node.js 標準のテストランナー�
 
 ## 3. 開発手順
 
-Node.js・npm は必須ではありません（テスト実行のみ Node.js 20 以上を使用）。
+npm は使用しません（package.json・node_modules なし）。テストは Node.js 20 以上の標準機能（`node --test`）のみで実行し、CSS は Tailwind のスタンドアロンCLIで生成します。静的解析は CI の構文チェック（`node --check`）と Gitleaks で行い、npm が必要な ESLint・Stylelint・Prettier は採用していません。
 
 ### 3.1 CSS の生成（Tailwind スタンドアロンCLI）
 
@@ -109,7 +109,7 @@ node --test "test/*.test.js"
 | `BACKUP_FOLDER_ID` |  | 管理データのバックアップ先フォルダ |
 | `RATE_LIMIT_PER_MINUTE` |  | 全体の1分あたり受付数（既定 120） |
 | `MAX_CONCURRENT` |  | 同時処理数（既定 10） |
-| `DAILY_API_LIMIT` |  | 外部API呼出の日次上限（既定 3000） |
+| `DAILY_API_LIMIT` |  | 外部API呼出の日次上限（既定 100。再試行・自動更新・お気に入りのID検索も実呼出として計上、日付はJST） |
 | `SERVICE_STOPPED` |  | `true` で全機能を停止 |
 | `API_ENABLED` |  | 旧版互換。`false` で全機能を停止（未設定なら有効） |
 | `FAVORITES_ENABLED` |  | 旧版互換。`true` でお気に入りを有効化（シート「09_機能管理」でも可） |
@@ -119,7 +119,16 @@ node --test "test/*.test.js"
 旧版で使っていた `MIN_REQUEST_INTERVAL_MS`・`LAST_REQUEST_MS`・`TEMPORARY_FAILURES`・`CIRCUIT_UNTIL` は使用しません（削除して問題ありません）。
 
 3. エディタで `setupOperations` → `setupTriggers` を一度ずつ実行します。
-4. 「デプロイ → 新しいデプロイ → ウェブアプリ」（実行ユーザー：自分、アクセス：全員）で公開し、URLを `js/config.js` の `GAS_URL` に設定します。
+4. 「デプロイ → 新しいデプロイ → ウェブアプリ」で、**実行ユーザー：自分**、**アクセスできるユーザー：全員**を選んで公開し、URLを `js/config.js` の `GAS_URL` に設定します。コードを更新したときは「デプロイを管理」→ 編集 →「新しいバージョン」で更新します（URLが変わりません）。
+5. エディタで `diagnose` を実行すると、設定の有無・停止の原因・本日のAPI呼出数をログで確認できます（APIキーの値は表示しません）。
+
+### トラブルシューティング
+
+| 症状 | 主な原因と対処 |
+| --- | --- |
+| アプリで「ERR_NETWORK」になるが、ブラウザでGASのURLを開くとJSONが表示される | デプロイの「アクセスできるユーザー」が「全員」になっていません（「Googleアカウントを持つ全員」「自分のみ」では、アプリからの匿名通信にログイン画面が返り、CORSエラーになります）。または `GAS_URL` が別のデプロイを指しています |
+| ステータスが `maintenance` になる | `diagnose` の【判定】を確認。`SERVICE_STOPPED` が有効、`API_ENABLED` が無効、シート「09_機能管理」の `service` が無効、シート「04_メンテナンス」に実施中の予定、のいずれかです（設定変更の反映は最大60秒） |
+| `ERR_RATE_LIMIT` になる | 本日の外部API呼出が `DAILY_API_LIMIT` に達しています（JSTの日付で翌日にリセット） |
 5. 開発用と本番用でGAS・シート・キーを分けてください（SEC-01）。
 
 お気に入りを有効にする場合は、規約確認のうえ `js/config.js` の `FAVORITES_ENABLED` を `true` にし、シート「09_機能管理」の `favorites` を `TRUE` にします。

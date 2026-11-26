@@ -56,7 +56,8 @@
   });
 
   const ERROR_MESSAGES = Object.freeze({
-    ERR_NETWORK: "通信に失敗しました。接続を確認して再試行してください。",
+    ERR_NETWORK:
+      "サーバーに接続できませんでした。通信状況を確認して再試行してください。解消しない場合はシステムステータスをご確認ください。",
     ERR_OFFLINE: "オフラインです。インターネット接続を確認してください。",
     ERR_TIMEOUT: "通信がタイムアウトしました。時間をおいて再試行してください。",
     ERR_RATE_LIMIT:
@@ -163,6 +164,8 @@
     shopFavoriteChanged: false,
 
     consentStep: 1,
+
+    previewShopId: null,
   };
 
   const themeMedia = matchMedia("(prefers-color-scheme: dark)");
@@ -1513,7 +1516,7 @@
 
       let keptOld = false;
 
-      if (result.fetchedAt && (result.complete || result.limited || !hasValidData())) {
+      if (result.fetchedAt && (result.complete || !hasValidData())) {
         state.shops = result.shops;
         state.result = result;
         state.visibleCount = C.DISPLAY_COUNT;
@@ -1557,7 +1560,7 @@
             : null;
 
         UI.announce(
-          `${result.limited ? "近い順に100件の" : ""}店舗情報を取得しました。半径3km以内に${state.shops.length}件、条件に一致するお店は${Q.filter(state.shops, state.filters, S.getFavoriteIds()).length}件です。`,
+          `${result.limited ? `周辺${result.total}件のうち近い順に${C.MAX_SHOPS}件の` : ""}店舗情報を取得しました。半径3km以内に${state.shops.length}件、条件に一致するお店は${Q.filter(state.shops, state.filters, S.getFavoriteIds()).length}件です。`,
         );
       }
     } catch (error) {
@@ -1757,8 +1760,8 @@
       return;
     }
 
-    // 近い順の100件に限定している場合の案内
-    if (state.result.limited && !state.loading) {
+    // 正常な100件上限：エラーとせず検索範囲の制約を案内（API-01／ERR_PARTIAL）
+    if (state.result.complete && state.result.limited && !state.loading) {
       container.append(
         el(
           "div",
@@ -1766,14 +1769,14 @@
           icon("circle-info"),
           el("p", {
             className: "tw-m-0 tw-text-sm",
-            text: `周辺の${state.result.total}件のうち、登録地点から近い順に${C.MAX_SHOPS}件を表示しています。`,
+            text: `周辺の${state.result.total}件のうち、登録地点から近い順に${C.MAX_SHOPS}件を取得しました。絞り込み・並び替えはこの${C.MAX_SHOPS}件の中で行い、${C.MAX_SHOPS + 1}件目以降のお店は表示されません。`,
           }),
         ),
       );
     }
 
     // 部分取得（ERR_PARTIAL：完了扱いにしない）
-    if (!state.result.complete && !state.result.limited && !state.loading) {
+    if (!state.result.complete && !state.loading) {
       container.append(
         el(
           "div",
@@ -1798,15 +1801,24 @@
 
       const genreNone = Array.isArray(state.filters.genreNames) && state.filters.genreNames.length === 0;
 
+      // SR-11：未取得店舗の存在を否定しない
+      const scopeNote = state.result.limited
+        ? `検索対象は近い順に取得した${C.MAX_SHOPS}件のみです。${C.MAX_SHOPS + 1}件目以降に該当するお店がある可能性があります。`
+        : "";
+
       container.append(
         stateCard({
           type: "empty",
-          title: noShops ? "半径3km以内にお店が見つかりません" : "該当するお店が見つかりません",
+          title: noShops
+            ? "取得できたお店がありません"
+            : state.result.limited
+              ? "取得済みの100件の中に該当するお店はありません"
+              : "該当するお店が見つかりません",
           message: noShops
-            ? "取得できる店舗がありませんでした。別の地点をお試しください。"
-            : genreNone
-              ? "ジャンルが1つも選択されていません。ジャンルを選択してください。"
-              : "条件を変えて、再度検索してください。",
+            ? "ホットペッパーグルメで取得できる店舗がありませんでした。別の地点をお試しください。"
+            : (genreNone
+                ? "ジャンルが1つも選択されていません。ジャンルを選択してください。"
+                : "条件を変えて、再度検索してください。") + (scopeNote ? " " + scopeNote : ""),
           actions: noShops
             ? [actionButton("別の地点を選ぶ", () => go("locations"), "gm-btn gm-btn-outline-primary gm-btn-sm", "location-dot")]
             : [
@@ -2067,18 +2079,18 @@
     // 最終更新日時（部分取得の時刻は区別）
     $("last-updated").textContent = !state.result
       ? "最終更新：未取得"
-      : state.result.complete || state.result.limited
+      : state.result.complete
         ? `最終更新：${formatDate(state.result.fetchedAt)}`
         : `取得日時（部分取得）：${formatDate(state.result.fetchedAt)}`;
 
-    // 全取得件数・API総件数・部分取得状態（SR-10）
-    $("acquisition-status").textContent = state.result
-      ? state.result.complete
-        ? `取得完了：${state.result.received}件（3km以内 ${state.shops.length}件）`
+    // API総件数・取得件数・上限到達（SR-10）
+    $("acquisition-status").textContent = !state.result
+      ? ""
+      : !state.result.complete
+        ? `部分取得：${state.result.received} / ${Math.min(state.result.total ?? C.MAX_SHOPS, C.MAX_SHOPS)}件（API総件数 ${state.result.total ?? "不明"}件）`
         : state.result.limited
-          ? `取得：近い順に${state.result.received}件（該当 全${state.result.total}件・3km以内 ${state.shops.length}件）`
-          : `部分取得：${state.result.received} / ${state.result.total ?? "不明"}件（3km以内 ${state.shops.length}件）`
-      : "";
+          ? `取得：${state.result.received}件（API総件数 ${state.result.total}件・上限${C.MAX_SHOPS}件に到達・3km以内 ${state.shops.length}件）`
+          : `取得：${state.result.received}件（API総件数 ${state.result.total}件・3km以内 ${state.shops.length}件）`;
 
     renderActiveChips();
 
@@ -2115,18 +2127,95 @@
     }
 
     if (!showMap) {
+      hideMapPreview();
       M.hideRestaurants();
       return;
     }
 
+    // 絞り込みで選択中の店舗が外れた場合はプレビューを閉じる
+    if (state.previewShopId && !filtered.some((shop) => shop.id === state.previewShopId)) {
+      hideMapPreview();
+    }
+
     try {
-      M.showRestaurants(current, filtered, state.filters.radiusM, openShop, fitMap);
+      M.showRestaurants(current, filtered, state.filters.radiusM, openShop, fitMap, showMapPreview);
     } catch {
       $("map-panel").hidden = true;
       $("list-panel").hidden = false;
 
       showError(errorText(new Error("ERR_MAP")));
     }
+  }
+
+  /* ====================================
+       12-2. 地図の店舗プレビュー（デザイン③：マーカー選択で基本情報）
+    ==================================== */
+
+  function hideMapPreview() {
+    state.previewShopId = null;
+
+    const node = $("map-preview");
+
+    node.hidden = true;
+    node.replaceChildren();
+  }
+
+  function showMapPreview(shop) {
+    state.previewShopId = shop.id;
+
+    const node = $("map-preview");
+
+    const photo = shopImage(shop, "card").querySelector("img");
+
+    const details = el(
+      "button",
+      {
+        className: "gm-btn gm-btn-primary gm-btn-sm",
+        attrs: { type: "button" },
+        dataset: { action: "details" },
+        on: { click: (event) => openShop(shop, event.currentTarget) },
+      },
+      "詳細",
+      UI.srOnly(`：${shop.name}`),
+    );
+
+    node.replaceChildren(
+      photo,
+      el(
+        "div",
+        { className: "gm-map-preview-body" },
+        el("p", { className: "gm-map-preview-name", text: shop.name || "店舗名なし" }),
+        el(
+          "div",
+          { className: "gm-chip-row" },
+          el("span", { className: "gm-chip gm-chip-genre", text: shop.genre || "ジャンル情報なし" }),
+        ),
+        el("p", { className: "gm-shop-line gm-shop-distance tw-m-0" }, icon("location-dot", "solid", "gm-shop-line-icon"), el("span", { text: distanceText(shop) })),
+      ),
+      el(
+        "div",
+        { className: "tw-flex tw-flex-col tw-items-center tw-gap-1" },
+        favoriteEnabled() ? heartButton(shop) : null,
+        details,
+      ),
+      el(
+        "button",
+        {
+          className: "gm-icon-btn gm-icon-btn-sm tw-self-start",
+          attrs: { type: "button", "aria-label": "店舗プレビューを閉じる" },
+          on: { click: () => { hideMapPreview(); $("restaurant-map").focus(); } },
+        },
+        icon("xmark"),
+      ),
+    );
+
+    // 店舗カードとして識別できるようにし、モーダルを閉じた後のフォーカス復帰に利用
+    node.dataset.shopId = shop.id;
+    node.hidden = false;
+
+    UI.announce(`${shop.name}、${distanceText(shop)}`);
+
+    details.focus({ preventScroll: true });
   }
 
   /* ====================================
@@ -2233,7 +2322,17 @@
       ? `情報取得日時：${formatDate(state.result.fetchedAt)}（営業時間・定休日は変更されている場合があります）`
       : "";
 
-    // 共有パネルを初期化
+    // 共有パネルを初期化（共有する店舗の概要を表示：デザイン⑨）
+    $("share-summary").replaceChildren(
+      shopImage(shop, "card").querySelector("img"),
+      el(
+        "div",
+        { className: "tw-min-w-0" },
+        el("p", { className: "gm-list-title tw-text-sm", text: shop.name || "店舗名なし" }),
+        el("p", { className: "gm-list-sub tw-text-xs", text: shop.address || "" }),
+      ),
+    );
+
     $("shop-share-panel").hidden = true;
     $("share-qr-area").hidden = true;
     $("share-qr").setAttribute("aria-expanded", "false");

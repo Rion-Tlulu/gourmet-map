@@ -271,7 +271,7 @@ test("1回の呼び出しで取得し、重複排除・3km以内に限定（総�
   );
 });
 
-test("総件数が100件を超える場合は近い順の100件で打ち切り、追加取得しない", async () => {
+test("API総件数が100件を超える場合は正常な上限到達（complete=true・limited=true）で追加取得しない", async () => {
   const { GM } = loadApp(["config", "storage", "search"]);
 
   const api = fakeApi(() => ({
@@ -287,7 +287,7 @@ test("総件数が100件を超える場合は近い順の100件で打ち切り�
   assert.equal(api.calls.length, 1);
   assert.equal(result.received, 100);
   assert.equal(result.total, 3000);
-  assert.equal(result.complete, false);
+  assert.equal(result.complete, true);
   assert.equal(result.limited, true);
   assert.equal(result.errorCode, null);
 });
@@ -304,7 +304,6 @@ test("想定件数に届かない応答は部分取得（ERR_PARTIAL）", async 
   const result = await GM.Search.fetchNearby({ lat: 35, lng: 135 });
 
   assert.equal(result.complete, false);
-  assert.equal(result.limited, false);
   assert.equal(result.errorCode, "ERR_PARTIAL");
   assert.equal(result.shops.length, 40);
 });

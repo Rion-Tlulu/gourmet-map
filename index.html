@@ -385,7 +385,7 @@
             <p id="result-count" class="tw-m-0 tw-text-sm tw-text-muted"></p>
           </div>
           <div class="tw-flex tw-items-center tw-gap-2">
-            <label for="sort" class="tw-text-sm tw-font-semibold tw-whitespace-nowrap">並び替え</label>
+            <label for="sort" class="tw-sr-only md:tw-not-sr-only tw-text-sm tw-font-semibold tw-whitespace-nowrap">並び替え</label>
             <select id="sort" class="gm-input gm-input-sm">
               <option value="distanceAsc">距離が近い順</option>
               <option value="distanceDesc">距離が遠い順</option>
@@ -418,7 +418,11 @@
           </div>
 
           <div id="map-panel" class="tw-min-w-0" hidden>
-            <div id="restaurant-map" class="gm-map"></div>
+            <div class="gm-map-wrap">
+              <div id="restaurant-map" class="gm-map"></div>
+              <!-- マーカー選択時の店舗プレビュー（デザイン③） -->
+              <div id="map-preview" class="gm-map-preview" role="region" aria-label="選択中の店舗" hidden></div>
+            </div>
             <p class="gm-help">
               地図上の円は直線距離の検索範囲です。地図を動かしても再検索はしません。店舗はすべて一覧でも確認できます。
             </p>
@@ -762,10 +766,11 @@
           <p class="gm-help">版：1.0.0（公開前の案）／制定：2026年11月25日</p>
           <h2>第1条（本アプリについて）</h2>
           <p>グルメマップ（以下「本アプリ」）は、登録した地点の周辺にある飲食店の検索を補助する、非商用のポートフォリオ作品です。ログイン・決済・予約・口コミ機能はありません。</p>
-          <h2>第2条（掲載情報）</h2>
+          <h2>第2条（掲載情報・検索範囲）</h2>
           <ul>
             <li>店舗情報はホットペッパーグルメWebサービスから取得できる範囲に限られ、登録地点から近い順に最大100件を表示します。すべての飲食店を網羅しません。</li>
             <li>営業時間・定休日・平均ディナー予算・設備情報などは提供元の掲載内容であり、正確性・最新性を保証しません。営業中かどうか・臨時休業は判定しません。</li>
+            <li>絞り込み・並び替えは、近い順に取得した最大100件の中で行います。周辺に100件を超える店舗がある場合、101件目以降の店舗は条件に該当しても表示されません。</li>
             <li>平均予算はディナーの平均予算で、ランチの予算ではありません。</li>
             <li>徒歩時間は直線距離から計算した目安で、実際の経路とは異なります。</li>
             <li>表示している取得日時は、提供元から取得した時刻です。キャッシュを利用した場合は元の取得時刻を表示します。</li>
@@ -966,6 +971,7 @@
 
             <div id="shop-share-panel" class="gm-share-panel" hidden>
               <h3 class="gm-section-title">店舗を共有</h3>
+              <div id="share-summary" class="gm-share-summary"></div>
               <p class="gm-help">共有されるのは店舗のURLのみです。登録地点や検索条件は共有されません。</p>
               <ul class="gm-share-list">
                 <li><button type="button" id="share-line"><span class="gm-share-icon gm-share-line" aria-hidden="true"><i class="fa-brands fa-line"></i></span>LINEで共有<span class="visually-hidden">（新しいタブで開く）</span></button></li>
@@ -1177,7 +1183,26 @@
             <h2 id="consent-heading" class="visually-hidden" tabindex="-1">グルメマップの初回案内</h2>
 
             <div class="gm-step" data-step="1">
-              <div class="gm-step-art" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></div>
+              <div class="gm-step-art gm-step-art-wide" aria-hidden="true"><svg viewBox="0 0 220 170" focusable="false">
+              <ellipse cx="110" cy="158" rx="104" ry="10" fill="#fde3c8" />
+              <rect x="22" y="100" width="8" height="56" rx="3" fill="#8b5e3c" />
+              <circle cx="26" cy="86" r="24" fill="#7cb342" />
+              <circle cx="12" cy="104" r="13" fill="#8bc34a" />
+              <rect x="191" y="108" width="7" height="48" rx="3" fill="#8b5e3c" />
+              <circle cx="194" cy="98" r="19" fill="#7cb342" />
+              <rect x="50" y="64" width="120" height="92" rx="6" fill="#fff6ec" stroke="#c2410c" stroke-width="3" />
+              <rect x="66" y="38" width="88" height="24" rx="6" fill="#c2410c" />
+              <text x="110" y="54" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff" font-family="Inter, sans-serif" letter-spacing="1">RESTAURANT</text>
+              <path d="M44 68h132l-6 20H50z" fill="#f97316" />
+              <path d="M62 68h12l-2 20h-12zM86 68h12l-1 20H86zM110 68h12v20h-11zM134 68h12l2 20h-12zM158 68h12l3 20h-12z" fill="#ffffff" opacity="0.9" />
+              <path d="M50 88q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 8 0" fill="#f97316" />
+              <rect x="62" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
+              <rect x="128" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
+              <rect x="97" y="104" width="26" height="52" rx="3" fill="#c2410c" />
+              <circle cx="117" cy="131" r="2" fill="#ffffff" />
+              <rect x="166" y="132" width="16" height="22" rx="2" fill="#3b2117" />
+              <rect x="168" y="135" width="12" height="9" rx="1" fill="#ffffff" />
+            </svg></div>
               <h3>グルメマップへようこそ！</h3>
               <p>いつもの場所から半径3km以内の<br />おいしいお店を見つけましょう。</p>
             </div>

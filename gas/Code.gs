@@ -17,7 +17,7 @@
  * ▼ Script Properties（任意・初期値）
  *   RATE_LIMIT_PER_MINUTE  全体の1分あたり受付数（120）
  *   MAX_CONCURRENT         同時処理数の上限（10）
- *   DAILY_API_LIMIT        外部API呼出の日次上限（3000）
+ *   DAILY_API_LIMIT        外部API呼出の日次上限（100）
  *   SERVICE_STOPPED        "true" で全機能を停止（停止フラグ）
  * ▼ 旧版との互換（設定済みの場合のみ有効）
  *   API_ENABLED            "false" で全機能を停止（メンテナンス）
@@ -52,7 +52,8 @@ const CIRCUIT_OPEN_SECONDS = 5 * 60;
 const DEFAULTS = Object.freeze({
   RATE_LIMIT_PER_MINUTE: 120,
   MAX_CONCURRENT: 10,
-  DAILY_API_LIMIT: 3000,
+  // 要件 SEC-05／MON-02：日次上限の初期値は100（Script Properties で変更可）
+  DAILY_API_LIMIT: 100,
 });
 
 /* ========================================
@@ -64,9 +65,30 @@ function properties_() {
 }
 
 function getProperty_(key, fallback) {
-  const value = properties_().getProperty(key);
+  const raw = properties_().getProperty(key);
+
+  // 前後の空白・改行は入力ミスとして除去
+  const value = raw === null ? null : String(raw).trim();
 
   return value === null || value === "" ? (fallback === undefined ? null : fallback) : value;
+}
+
+/**
+ * 有効／無効の値を解釈する（チェックボックス・TRUE/FALSE・有効/無効・ON/OFF・1/0）
+ * 解釈できない値は null（未設定扱い）
+ */
+function parseFlag_(value) {
+  if (value === true || value === false) return value;
+
+  if (value === null || value === undefined) return null;
+
+  const text = String(value).trim().toLowerCase();
+
+  if (["true", "有効", "on", "1", "yes", "はい", "○"].indexOf(text) >= 0) return true;
+
+  if (["false", "無効", "off", "0", "no", "いいえ", "×"].indexOf(text) >= 0) return false;
+
+  return null;
 }
 
 function requireProperty_(key) {
@@ -154,6 +176,10 @@ function handleRequest_(params) {
       requestId: requestId,
       fetchedAt: data.fetchedAt || new Date().toISOString(),
       complete: data.complete === undefined ? null : data.complete,
+      // SYS-03：API総件数・取得件数・上限到達状態（店舗検索のみ）
+      total: data.total === undefined ? null : data.total,
+      returned: data.returned === undefined ? null : data.returned,
+      limitReached: data.limitReached === undefined ? null : data.limitReached,
     });
   } catch (error) {
     const code = codeOf_(error);
@@ -238,8 +264,11 @@ function readFeatureFlags_() {
       rows.forEach(function (row) {
         const key = String(row[0] || "").trim();
 
-        if (/^[a-z][a-zA-Z0-9_]{0,40}$/.test(key)) {
-          flags[key] = row[1] === true || String(row[1]).toUpperCase() === "TRUE";
+        const value = parseFlag_(row[1]);
+
+        // 解釈できない値（空欄など）は既定値のまま
+        if (/^[a-z][a-zA-Z0-9_]{0,40}$/.test(key) && value !== null) {
+          flags[key] = value;
         }
       });
     }
@@ -286,22 +315,34 @@ function readMaintenance_() {
   return null;
 }
 
+// 停止の理由（管理者向け診断用。公開応答には含めない）
+function stopReason_() {
+  if (parseFlag_(getProperty_("SERVICE_STOPPED")) === true) return "SERVICE_STOPPED";
+
+  // 旧版互換：明示的に無効（false 等）が設定されている場合のみ停止
+  if (parseFlag_(getProperty_("API_ENABLED")) === false) return "API_ENABLED";
+
+  const flags = readFeatureFlags_();
+
+  if (flags.service === false) return "FEATURE_FLAG_SERVICE";
+
+  const maintenance = readMaintenance_();
+
+  if (maintenance && maintenance.active) return "MAINTENANCE_SHEET";
+
+  return null;
+}
+
 // 停止フラグ（新：SERVICE_STOPPED=true／旧：API_ENABLED=false）
 function serviceStopped_() {
-  if (String(getProperty_("SERVICE_STOPPED", "false")).toLowerCase() === "true") {
-    return true;
-  }
-
-  const legacy = getProperty_("API_ENABLED");
-
-  return legacy !== null && String(legacy).toLowerCase() !== "true";
+  return (
+    parseFlag_(getProperty_("SERVICE_STOPPED")) === true ||
+    parseFlag_(getProperty_("API_ENABLED")) === false
+  );
 }
 
 function favoritesEnabled_(flags) {
-  return (
-    flags.favorites === true ||
-    String(getProperty_("FAVORITES_ENABLED", "false")).toLowerCase() === "true"
-  );
+  return flags.favorites === true || parseFlag_(getProperty_("FAVORITES_ENABLED")) === true;
 }
 
 function ensureServiceAvailable_(action) {
@@ -826,16 +867,15 @@ function searchShops_(params) {
     return shop.id && isFinite(shop.lat) && isFinite(shop.lng);
   });
 
-  const nextStart = resultStart + returned;
+  // SYS-03：complete は単回取得の成否（全掲載店舗の網羅ではない）
+  const expected = Math.min(total, PAGE_SIZE);
 
   const data = {
     shops: shops,
-    total: Math.floor(total),
-    start: resultStart,
-    returned: returned,
-    nextStart: nextStart,
-    // 総件数到達・空ページで終了
-    complete: returned === 0 || nextStart > total,
+    total: Math.floor(total), // API総件数（results_available）
+    returned: returned, // 取得件数（results_returned）
+    limitReached: total > PAGE_SIZE, // 100件の上限に達した（101件目以降は未取得）
+    complete: returned === expected && shops.length === returned,
     fetchedAt: new Date().toISOString(),
     cached: false,
   };

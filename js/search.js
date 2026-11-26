@@ -121,8 +121,8 @@
    * 登録地点から近い順に最大100件を1回の呼び出しで取得する
    * （ホットペッパーは位置検索時に距離順で返すため、近い100件になる）
    *
-   * complete：提供元の該当件数をすべて取得した（総件数100件以下）
-   * limited ：総件数が100件を超えるため、近い順の100件で打ち切った
+   * complete：単回取得が正常に完了した（SYS-03。全掲載店舗の網羅ではない）
+   * limited ：API総件数が100件を超え、近い順の100件で上限に達した（正常）
    */
   async function fetchNearby(location, options = {}) {
     if (options.signal?.aborted) {
@@ -190,15 +190,15 @@
       (shop) => Number.isFinite(shop.distanceM) && shop.distanceM <= C.MAX_RADIUS_M,
     );
 
-    // 想定件数に届かない場合は部分取得（欠落）として扱う
-    const missing = received < expected;
+    // 想定件数に届かない・サーバーが不完全と判定した場合は部分取得（欠損）
+    const missing = received < expected || result.complete === false;
 
     return {
       shops: nearby,
       received,
       total,
-      complete: !missing && received >= total,
-      limited: !missing && total > C.MAX_SHOPS,
+      complete: !missing,
+      limited: total > C.MAX_SHOPS,
       fetchedAt: result.fetchedAt,
       errorCode: missing ? "ERR_PARTIAL" : null,
       requestId: null,
