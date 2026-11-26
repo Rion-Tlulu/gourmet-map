@@ -73,6 +73,14 @@ html[data-contrast="high"] {
   --gm-chip-green-border: #0b3d1f;
 
   --gm-shadow: none;
+  --gm-shadow-lg: none;
+  --gm-grad-primary: #8a2c08;
+  --gm-grad-primary-hover: #5c1d05;
+  --gm-grad-soft: #ffffff;
+  --gm-glass: #ffffff;
+  --gm-page-deco: none;
+  --gm-hero-overlay: rgb(0 0 0 / 82%);
+  --gm-hero-overlay-sm: rgb(0 0 0 / 82%);
 }
 
 html[data-theme="dark"][data-contrast="high"] {
@@ -96,6 +104,14 @@ html[data-theme="dark"][data-contrast="high"] {
   --gm-chip-green: #ffffff;
   --gm-chip-green-bg: #000000;
   --gm-chip-green-border: #ffffff;
+
+  --gm-shadow: none;
+  --gm-shadow-lg: none;
+  --gm-grad-primary: #ffd2a8;
+  --gm-grad-primary-hover: #ffffff;
+  --gm-grad-soft: #000000;
+  --gm-glass: #000000;
+  --gm-page-deco: none;
 }
 
 html[data-contrast="high"] .gm-btn,
@@ -180,10 +196,6 @@ html[data-reduce-motion="true"] .gm-spinner {
 @media (max-width: 380px) {
   .gm-main {
     padding-inline: 0.75rem;
-  }
-
-  .gm-hero-art {
-    display: none;
   }
 
   .gm-shop-card {

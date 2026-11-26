@@ -32,7 +32,9 @@
 
     <title>グルメマップ | Gourmet Map</title>
 
-    <link rel="icon" href="./assets/images/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./assets/images/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="./assets/images/favicon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="./assets/images/apple-touch-icon.png" />
 
     <!-- 表示設定を描画前に反映（同期読み込み） -->
     <script src="./js/boot.js"></script>
@@ -132,7 +134,7 @@
       <div class="gm-header-inner">
         <a class="gm-brand" href="#home" aria-label="グルメマップ ホームへ">
           <span class="gm-brand-icon" aria-hidden="true">
-            <i class="fa-solid fa-utensils"></i>
+            <img src="./assets/images/favicon-192.png" alt="" width="44" height="44" decoding="async" />
           </span>
           <span class="tw-flex tw-flex-col tw-leading-tight">
             <span class="gm-brand-title">グルメマップ</span>
@@ -243,26 +245,16 @@
           </div>
 
           <div class="gm-hero-art" aria-hidden="true">
-            <svg viewBox="0 0 220 170" focusable="false">
-              <ellipse cx="110" cy="158" rx="104" ry="10" fill="#fde3c8" />
-              <rect x="22" y="100" width="8" height="56" rx="3" fill="#8b5e3c" />
-              <circle cx="26" cy="86" r="24" fill="#7cb342" />
-              <circle cx="12" cy="104" r="13" fill="#8bc34a" />
-              <rect x="191" y="108" width="7" height="48" rx="3" fill="#8b5e3c" />
-              <circle cx="194" cy="98" r="19" fill="#7cb342" />
-              <rect x="50" y="64" width="120" height="92" rx="6" fill="#fff6ec" stroke="#c2410c" stroke-width="3" />
-              <rect x="66" y="38" width="88" height="24" rx="6" fill="#c2410c" />
-              <text x="110" y="54" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff" font-family="Inter, sans-serif" letter-spacing="1">RESTAURANT</text>
-              <path d="M44 68h132l-6 20H50z" fill="#f97316" />
-              <path d="M62 68h12l-2 20h-12zM86 68h12l-1 20H86zM110 68h12v20h-11zM134 68h12l2 20h-12zM158 68h12l3 20h-12z" fill="#ffffff" opacity="0.9" />
-              <path d="M50 88q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 8 0" fill="#f97316" />
-              <rect x="62" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
-              <rect x="128" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
-              <rect x="97" y="104" width="26" height="52" rx="3" fill="#c2410c" />
-              <circle cx="117" cy="131" r="2" fill="#ffffff" />
-              <rect x="166" y="132" width="16" height="22" rx="2" fill="#3b2117" />
-              <rect x="168" y="135" width="12" height="9" rx="1" fill="#ffffff" />
-            </svg>
+            <img
+              src="./assets/images/hero-shop.jpg"
+              srcset="./assets/images/hero-shop.jpg 640w, ./assets/images/hero-shop-1280.jpg 1280w"
+              sizes="(min-width: 1440px) 1376px, 100vw"
+              alt=""
+              width="1280"
+              height="962"
+              decoding="async"
+              fetchpriority="high"
+            />
           </div>
         </div>
 
@@ -1183,26 +1175,9 @@
             <h2 id="consent-heading" class="visually-hidden" tabindex="-1">グルメマップの初回案内</h2>
 
             <div class="gm-step" data-step="1">
-              <div class="gm-step-art gm-step-art-wide" aria-hidden="true"><svg viewBox="0 0 220 170" focusable="false">
-              <ellipse cx="110" cy="158" rx="104" ry="10" fill="#fde3c8" />
-              <rect x="22" y="100" width="8" height="56" rx="3" fill="#8b5e3c" />
-              <circle cx="26" cy="86" r="24" fill="#7cb342" />
-              <circle cx="12" cy="104" r="13" fill="#8bc34a" />
-              <rect x="191" y="108" width="7" height="48" rx="3" fill="#8b5e3c" />
-              <circle cx="194" cy="98" r="19" fill="#7cb342" />
-              <rect x="50" y="64" width="120" height="92" rx="6" fill="#fff6ec" stroke="#c2410c" stroke-width="3" />
-              <rect x="66" y="38" width="88" height="24" rx="6" fill="#c2410c" />
-              <text x="110" y="54" text-anchor="middle" font-size="10.5" font-weight="700" fill="#ffffff" font-family="Inter, sans-serif" letter-spacing="1">RESTAURANT</text>
-              <path d="M44 68h132l-6 20H50z" fill="#f97316" />
-              <path d="M62 68h12l-2 20h-12zM86 68h12l-1 20H86zM110 68h12v20h-11zM134 68h12l2 20h-12zM158 68h12l3 20h-12z" fill="#ffffff" opacity="0.9" />
-              <path d="M50 88q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 16 0q8 9 8 0" fill="#f97316" />
-              <rect x="62" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
-              <rect x="128" y="102" width="30" height="26" rx="3" fill="#cfe8f5" stroke="#c2410c" stroke-width="2" />
-              <rect x="97" y="104" width="26" height="52" rx="3" fill="#c2410c" />
-              <circle cx="117" cy="131" r="2" fill="#ffffff" />
-              <rect x="166" y="132" width="16" height="22" rx="2" fill="#3b2117" />
-              <rect x="168" y="135" width="12" height="9" rx="1" fill="#ffffff" />
-            </svg></div>
+              <div class="gm-step-art gm-step-art-wide" aria-hidden="true">
+                <img src="./assets/images/hero-shop.jpg" alt="" width="640" height="481" decoding="async" />
+              </div>
               <h3>グルメマップへようこそ！</h3>
               <p>いつもの場所から半径3km以内の<br />おいしいお店を見つけましょう。</p>
             </div>

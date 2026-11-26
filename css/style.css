@@ -61,7 +61,29 @@
   --gm-toast-info: #93c5fd;
   --gm-toast-danger: #fca5a5;
 
-  --gm-shadow: 0 4px 16px rgb(59 33 23 / 7%);
+  --gm-shadow: 0 1px 2px rgb(59 33 23 / 6%), 0 6px 20px rgb(59 33 23 / 7%);
+  --gm-shadow-lg: 0 2px 4px rgb(59 33 23 / 6%), 0 14px 34px rgb(59 33 23 / 14%);
+
+  /* グラデーション（白文字とのコントラスト 4.6:1 以上） */
+  --gm-grad-primary: linear-gradient(135deg, #cc4a12 0%, #b3300b 100%);
+  --gm-grad-primary-hover: linear-gradient(135deg, #b3300b 0%, #9a2a09 100%);
+  --gm-grad-soft: linear-gradient(135deg, #fff3e6 0%, #ffe2c7 100%);
+  --gm-glass: rgb(255 255 255 / 82%);
+  --gm-hero-overlay: linear-gradient(
+    90deg,
+    rgb(36 18 8 / 88%) 0%,
+    rgb(36 18 8 / 70%) 42%,
+    rgb(36 18 8 / 10%) 100%
+  );
+  --gm-hero-overlay-sm: linear-gradient(
+    180deg,
+    rgb(36 18 8 / 15%) 0%,
+    rgb(36 18 8 / 55%) 45%,
+    rgb(36 18 8 / 90%) 100%
+  );
+  --gm-page-deco:
+    radial-gradient(60rem 30rem at 100% -10%, rgb(251 146 60 / 12%), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 30%, rgb(132 204 22 / 7%), transparent 60%);
 
   --gm-font:
     "Inter", "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
@@ -123,7 +145,16 @@ html[data-theme="dark"] {
   --gm-toast-info: #1d4ed8;
   --gm-toast-danger: #b91c1c;
 
-  --gm-shadow: none;
+  --gm-shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 18px rgb(0 0 0 / 35%);
+  --gm-shadow-lg: 0 2px 4px rgb(0 0 0 / 45%), 0 14px 30px rgb(0 0 0 / 50%);
+
+  --gm-grad-primary: linear-gradient(135deg, #fdba74 0%, #fb923c 100%);
+  --gm-grad-primary-hover: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  --gm-grad-soft: linear-gradient(135deg, #33251d 0%, #3d2a1c 100%);
+  --gm-glass: rgb(36 29 26 / 82%);
+  --gm-page-deco:
+    radial-gradient(60rem 30rem at 100% -10%, rgb(251 146 60 / 9%), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 30%, rgb(132 204 22 / 5%), transparent 60%);
 }
 
 /* ========================================
@@ -166,7 +197,8 @@ body {
   flex-direction: column;
   font-family: var(--gm-font);
   color: var(--gm-text);
-  background: var(--gm-bg);
+  background: var(--gm-page-deco, none), var(--gm-bg);
+  background-attachment: fixed;
   line-height: 1.7;
   overflow-wrap: anywhere;
 }

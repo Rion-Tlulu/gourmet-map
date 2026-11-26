@@ -39,6 +39,10 @@ const ALLOWED_ACTIONS = ["status", "search", "geocode", "favorites"];
 const SEARCH_RANGE = 5; // 3000m
 // 店舗検索は1回の呼び出しで近い順に最大100件のみ（ページングしない）
 const PAGE_SIZE = 100;
+// type=credit_card：標準の全項目に「利用できるカードの種類」を付加（電話番号はAPIの返却項目にない）
+const RESPONSE_TYPE = "credit_card";
+// 返却項目を変えたら更新（古い形式のキャッシュを使わない）
+const SHOP_SCHEMA = 2;
 const MAX_BODY_LENGTH = 4000;
 
 const CACHE_TTL_SECONDS = 30 * 60; // PER-01（暫定30分）
@@ -752,9 +756,30 @@ function photoList_(shop) {
     .slice(0, 3);
 }
 
-// 許可した項目のみを返す（25項目＋補助項目）
+// 利用できるカードの種類（type=credit_card の credit_card[].name）
+function creditCards_(shop) {
+  const list = Array.isArray(shop.credit_card) ? shop.credit_card : [];
+  const names = [];
+
+  list.forEach(function (card) {
+    const name = cleanText_(card && card.name, 50);
+
+    if (name && names.indexOf(name) < 0 && names.length < 30) names.push(name);
+  });
+
+  return names;
+}
+
+function hotpepperUrl_(url) {
+  return typeof url === "string" && /^https:\/\/([a-z0-9-]+\.)*hotpepper\.jp\//i.test(url)
+    ? url.slice(0, 300)
+    : "";
+}
+
+// 許可した項目のみを返す（許可リスト方式）
 function mapShop_(shop) {
   const url = shop.urls && typeof shop.urls.pc === "string" ? shop.urls.pc : "";
+  const coupon = shop.coupon_urls || {};
 
   return {
     id: cleanText_(shop.id, 20),
@@ -768,10 +793,12 @@ function mapShop_(shop) {
     open: cleanText_(shop.open, 600),
     close: cleanText_(shop.close, 300),
     budget: cleanText_(shop.budget && shop.budget.average, 200),
+    budgetMemo: cleanText_(shop.budget_memo, 300),
     stationName: cleanText_(shop.station_name, 100),
     access: cleanText_(shop.access, 400),
     lunch: cleanText_(shop.lunch, 200),
     card: cleanText_(shop.card, 200),
+    creditCards: creditCards_(shop),
     parking: cleanText_(shop.parking, 200),
     nonSmoking: cleanText_(shop.non_smoking, 200),
     barrierFree: cleanText_(shop.barrier_free, 200),
@@ -781,7 +808,18 @@ function mapShop_(shop) {
     child: cleanText_(shop.child, 200),
     freeDrink: cleanText_(shop.free_drink, 200),
     freeFood: cleanText_(shop.free_food, 200),
-    url: /^https:\/\/([a-z0-9-]+\.)*hotpepper\.jp\//i.test(url) ? url.slice(0, 300) : "",
+    partyCapacity: cleanText_(shop.party_capacity, 50),
+    course: cleanText_(shop.course, 200),
+    charter: cleanText_(shop.charter, 200),
+    tatami: cleanText_(shop.tatami, 200),
+    horigotatsu: cleanText_(shop.horigotatsu, 200),
+    midnight: cleanText_(shop.midnight, 200),
+    english: cleanText_(shop.english, 200),
+    pet: cleanText_(shop.pet, 200),
+    otherMemo: cleanText_(shop.other_memo, 300),
+    shopDetailMemo: cleanText_(shop.shop_detail_memo, 300),
+    url: hotpepperUrl_(url),
+    couponUrl: hotpepperUrl_(coupon.sp) || hotpepperUrl_(coupon.pc),
     photos: photoList_(shop),
   };
 }
@@ -815,7 +853,9 @@ function searchShops_(params) {
 
   // 座標はそのまま保存せずハッシュ化したキーで一時保持
   const key =
-    "hp:" + hashKey_([lat.toFixed(6), lng.toFixed(6), SEARCH_RANGE, PAGE_SIZE, start].join(":"));
+    "hp:" + hashKey_(
+      [lat.toFixed(6), lng.toFixed(6), SEARCH_RANGE, PAGE_SIZE, start, RESPONSE_TYPE, SHOP_SCHEMA].join(":"),
+    );
 
   const cached = cacheGet_(key);
 
@@ -836,6 +876,7 @@ function searchShops_(params) {
       datum: "world",
       count: PAGE_SIZE,
       start: start,
+      type: RESPONSE_TYPE,
       format: "json",
     });
 
@@ -913,6 +954,7 @@ function searchFavorites_(params) {
       key: requireProperty_("HOTPEPPER_API_KEY"),
       id: unique.join(","),
       count: 20,
+      type: RESPONSE_TYPE,
       format: "json",
     });
 

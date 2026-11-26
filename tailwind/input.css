@@ -47,9 +47,12 @@
   ========================= */
 
   .gm-header {
-    @apply tw-sticky tw-top-0 tw-border-b tw-border-solid tw-border-line tw-bg-surface;
+    @apply tw-sticky tw-top-0 tw-border-b tw-border-solid tw-border-line;
     border-width: 0 0 1px;
     z-index: 1020;
+    background: var(--gm-glass);
+    -webkit-backdrop-filter: saturate(1.6) blur(14px);
+    backdrop-filter: saturate(1.6) blur(14px);
   }
 
   .gm-header-inner {
@@ -62,14 +65,13 @@
   }
 
   .gm-brand-icon {
-    @apply tw-grid tw-h-11 tw-w-11 tw-shrink-0 tw-place-items-center tw-text-xl tw-text-white;
-    background: var(--gm-primary-strong);
-    border-radius: 50% 50% 50% 12%;
-    transform: rotate(-45deg);
+    @apply tw-block tw-h-11 tw-w-11 tw-shrink-0;
   }
 
-  .gm-brand-icon > i {
-    transform: rotate(45deg);
+  .gm-brand-icon > img {
+    @apply tw-block tw-h-full tw-w-full;
+    border-radius: 26%;
+    box-shadow: 0 3px 10px rgb(59 33 23 / 22%);
   }
 
   .gm-brand-title {
@@ -87,8 +89,8 @@
   }
 
   .gm-desktop-nav a {
-    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-lg tw-px-3 tw-font-semibold tw-text-ink tw-no-underline;
-    border-bottom: 3px solid transparent;
+    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-full tw-px-4 tw-font-semibold tw-text-ink tw-no-underline;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   .gm-desktop-nav a:hover {
@@ -96,9 +98,8 @@
   }
 
   .gm-desktop-nav a[aria-current="page"] {
-    @apply tw-text-primary;
-    border-bottom-color: var(--gm-primary);
-    border-radius: 0.5rem 0.5rem 0 0;
+    @apply tw-bg-accent tw-font-extrabold tw-text-accent-ink;
+    box-shadow: inset 0 0 0 1px var(--gm-border);
   }
 
   .gm-header-actions {
@@ -106,7 +107,7 @@
   }
 
   .gm-location-pill {
-    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-4 tw-text-sm tw-font-semibold tw-text-ink;
+    @apply tw-flex tw-min-h-[44px] tw-items-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-4 tw-text-sm tw-font-semibold tw-text-ink tw-shadow-card;
   }
 
   .gm-location-pill > .fa-location-dot {
@@ -119,7 +120,12 @@
 
   .gm-btn {
     @apply tw-inline-flex tw-min-h-[44px] tw-cursor-pointer tw-select-none tw-items-center tw-justify-center tw-gap-2 tw-rounded-full tw-border tw-border-solid tw-border-transparent tw-px-5 tw-py-2 tw-text-center tw-font-bold tw-leading-tight tw-no-underline;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+      box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .gm-btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
   }
 
   .gm-btn:disabled,
@@ -136,14 +142,17 @@
   }
 
   .gm-btn-primary {
-    @apply tw-bg-primary tw-text-on-primary;
-    border-color: var(--gm-primary);
-    box-shadow: 0 4px 12px var(--gm-primary-shadow);
+    @apply tw-text-on-primary;
+    background: var(--gm-grad-primary);
+    border-color: transparent;
+    box-shadow: 0 6px 18px var(--gm-primary-shadow), inset 0 1px 0 rgb(255 255 255 / 18%);
   }
 
   .gm-btn-primary:hover:not(:disabled) {
-    @apply tw-bg-primary-hover tw-text-on-primary;
-    border-color: var(--gm-primary-hover);
+    @apply tw-text-on-primary;
+    background: var(--gm-grad-primary-hover);
+    box-shadow: 0 10px 24px var(--gm-primary-shadow), inset 0 1px 0 rgb(255 255 255 / 18%);
+    transform: translateY(-1px);
   }
 
   .gm-btn-outline {
@@ -226,12 +235,26 @@
     @apply tw-rounded-card tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-4 tw-shadow-card md:tw-p-5;
   }
 
+  /* 見出しの左に短いグラデーションのアクセント */
+  .gm-card-title,
+  .gm-section-title {
+    @apply tw-flex tw-items-center tw-gap-2.5 tw-font-extrabold;
+  }
+
   .gm-card-title {
-    @apply tw-mb-3 tw-text-lg tw-font-extrabold;
+    @apply tw-mb-3 tw-text-lg;
   }
 
   .gm-section-title {
-    @apply tw-mb-2 tw-text-base tw-font-extrabold;
+    @apply tw-mb-2 tw-text-base;
+  }
+
+  .gm-card-title::before,
+  .gm-section-title::before {
+    content: "";
+    @apply tw-block tw-w-1.5 tw-shrink-0 tw-self-stretch tw-rounded-full;
+    min-height: 1.1em;
+    background: var(--gm-grad-primary);
   }
 
   /* グラデーション背景の濃い側でも 4.5:1 以上（axe の手動確認項目で検出：4.24 → 5.98） */
@@ -255,22 +278,61 @@
      ホーム
   ========================= */
 
+  /* ホーム：写真を全面に敷き、文字側を暗くして白文字のコントラストを確保 */
   .gm-hero {
-    @apply tw-mb-4 tw-flex tw-items-center tw-gap-3 tw-rounded-card tw-px-4 tw-py-5 md:tw-px-8 md:tw-py-8;
-    background: var(--gm-hero-bg);
+    @apply tw-relative tw-isolate tw-flex tw-min-h-[15rem] tw-items-end tw-overflow-hidden tw-rounded-card tw-px-5 tw-pb-14 tw-pt-8 tw-text-white sm:tw-min-h-[17rem] md:tw-min-h-[20rem] md:tw-items-center md:tw-px-10 md:tw-pb-16;
+    margin-bottom: -2.5rem;
+    background: #2b1a12;
+    box-shadow: var(--gm-shadow-lg);
+  }
+
+  .gm-hero > :first-child {
+    @apply tw-relative;
+    z-index: 1;
+    max-width: 34rem;
+  }
+
+  .gm-hero + * {
+    @apply tw-relative;
+    z-index: 2;
+  }
+
+  .gm-hero .gm-eyebrow {
+    @apply tw-mb-3 tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded-full tw-px-3 tw-py-1 tw-text-xs tw-font-bold md:tw-text-sm;
+    color: #fff1e0;
+    background: rgb(255 255 255 / 14%);
+    border: 1px solid rgb(255 255 255 / 28%);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
   }
 
   .gm-hero-title {
-    @apply tw-m-0 tw-text-2xl tw-font-extrabold tw-leading-snug md:tw-text-4xl;
-    letter-spacing: 0.02em;
+    @apply tw-m-0 tw-text-[1.75rem] tw-font-extrabold tw-leading-snug md:tw-text-5xl md:tw-leading-tight;
+    letter-spacing: 0.03em;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgb(0 0 0 / 35%);
   }
 
   .gm-hero-art {
-    @apply tw-w-28 tw-shrink-0 sm:tw-w-40 md:tw-w-56;
+    @apply tw-absolute tw-inset-0 tw-m-0;
+    z-index: 0;
   }
 
-  .gm-hero-art svg {
-    @apply tw-block tw-h-auto tw-w-full;
+  .gm-hero-art img {
+    @apply tw-block tw-h-full tw-w-full tw-object-cover;
+    object-position: 70% 40%;
+  }
+
+  .gm-hero-art::after {
+    content: "";
+    @apply tw-absolute tw-inset-0;
+    background: var(--gm-hero-overlay-sm);
+  }
+
+  @media (min-width: 768px) {
+    .gm-hero-art::after {
+      background: var(--gm-hero-overlay);
+    }
   }
 
   .gm-quick {
@@ -278,7 +340,13 @@
   }
 
   .gm-quick-item {
-    @apply tw-relative tw-flex tw-min-h-[88px] tw-cursor-pointer tw-flex-col tw-items-center tw-justify-center tw-gap-1 tw-rounded-2xl tw-border-2 tw-border-solid tw-border-line tw-bg-surface-2 tw-px-1 tw-py-2 tw-text-center tw-text-xs tw-font-bold sm:tw-text-sm;
+    @apply tw-relative tw-flex tw-min-h-[88px] tw-cursor-pointer tw-flex-col tw-items-center tw-justify-center tw-gap-1.5 tw-rounded-2xl tw-border-2 tw-border-solid tw-border-line tw-bg-surface tw-px-1 tw-py-2 tw-text-center tw-text-xs tw-font-bold tw-shadow-card sm:tw-text-sm;
+    transition: transform 0.2s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+  }
+
+  .gm-quick-item:hover {
+    @apply tw-border-primary;
+    transform: translateY(-2px);
   }
 
   .gm-quick-input {
@@ -291,14 +359,16 @@
   }
 
   .gm-quick-item:has(.gm-quick-input:checked) {
-    @apply tw-border-primary tw-bg-accent;
+    @apply tw-border-primary;
+    background: var(--gm-grad-soft);
   }
 
   .gm-quick-item:has(.gm-quick-input:checked)::after {
     content: "\f00c";
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
-    @apply tw-absolute tw-right-2 tw-top-1.5 tw-text-xs tw-text-primary;
+    @apply tw-absolute tw-right-1.5 tw-top-1.5 tw-grid tw-h-5 tw-w-5 tw-place-items-center tw-rounded-full tw-text-[0.6rem] tw-text-on-primary;
+    background: var(--gm-grad-primary);
   }
 
   .gm-quick-item:has(.gm-quick-input:focus-visible) {
@@ -307,7 +377,8 @@
   }
 
   .gm-quick-icon {
-    @apply tw-grid tw-h-10 tw-w-10 tw-place-items-center tw-rounded-full tw-text-lg;
+    @apply tw-grid tw-h-11 tw-w-11 tw-place-items-center tw-rounded-2xl tw-text-lg;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 4%);
   }
 
   .gm-quick-icon-orange {
@@ -339,6 +410,15 @@
 
   .gm-input {
     @apply tw-block tw-min-h-[48px] tw-w-full tw-min-w-0 tw-rounded-xl tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-px-3.5 tw-py-2 tw-text-base tw-text-ink;
+  }
+
+  .gm-input {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .gm-input:focus {
+    @apply tw-border-primary;
+    box-shadow: 0 0 0 4px var(--gm-primary-shadow);
   }
 
   .gm-input::placeholder {
@@ -385,7 +465,9 @@
   }
 
   .gm-segment .btn-check:checked + label {
-    @apply tw-bg-primary tw-text-on-primary;
+    @apply tw-text-on-primary;
+    background: var(--gm-grad-primary);
+    box-shadow: 0 3px 10px var(--gm-primary-shadow);
   }
 
   .gm-segment .btn-check:focus-visible + label {
@@ -430,7 +512,9 @@
   }
 
   .gm-chip-genre {
-    @apply tw-border-transparent tw-bg-accent tw-text-accent-ink;
+    @apply tw-border-transparent tw-text-accent-ink;
+    background: var(--gm-grad-soft);
+    box-shadow: inset 0 0 0 1px var(--gm-border);
   }
 
   .gm-chip-filter {
@@ -449,7 +533,8 @@
   }
 
   .gm-chip-tab[aria-pressed="true"] {
-    @apply tw-border-primary tw-bg-primary tw-text-on-primary;
+    @apply tw-border-transparent tw-text-on-primary;
+    background: var(--gm-grad-primary);
   }
 
   .gm-badge {
@@ -481,11 +566,13 @@
   }
 
   .gm-list-main[aria-current="true"] .gm-list-icon {
-    @apply tw-bg-primary tw-text-on-primary;
+    @apply tw-text-on-primary;
+    background: var(--gm-grad-primary);
   }
 
   .gm-list-icon {
-    @apply tw-grid tw-h-9 tw-w-9 tw-shrink-0 tw-place-items-center tw-rounded-full tw-bg-accent tw-text-primary;
+    @apply tw-grid tw-h-10 tw-w-10 tw-shrink-0 tw-place-items-center tw-rounded-xl tw-text-primary;
+    background: var(--gm-grad-soft);
   }
 
   .gm-list-icon-lg {
@@ -506,7 +593,7 @@
   }
 
   .gm-list-card {
-    @apply tw-flex tw-flex-wrap tw-items-start tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-4 tw-shadow-card sm:tw-flex-nowrap;
+    @apply tw-flex tw-flex-wrap tw-items-start tw-gap-3 tw-rounded-card tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-4 tw-shadow-card sm:tw-flex-nowrap;
   }
 
   .gm-list-card.is-active {
@@ -551,7 +638,7 @@
   }
 
   .gm-view-switch {
-    @apply tw-mb-3 tw-grid tw-grid-cols-2 tw-gap-1 tw-rounded-full tw-border tw-border-solid tw-border-line-strong tw-bg-surface tw-p-1;
+    @apply tw-mb-3 tw-grid tw-grid-cols-2 tw-gap-1 tw-rounded-full tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-1 tw-shadow-card;
   }
 
   .gm-view-switch button {
@@ -559,7 +646,9 @@
   }
 
   .gm-view-switch button[aria-pressed="true"] {
-    @apply tw-bg-primary tw-text-on-primary;
+    @apply tw-text-on-primary;
+    background: var(--gm-grad-primary);
+    box-shadow: 0 3px 10px var(--gm-primary-shadow);
   }
 
   /* スマートフォンは1行で横スクロール（デザイン②）、タブレット以上は折り返し */
@@ -601,13 +690,26 @@
   }
 
   .gm-shop-card {
-    @apply tw-grid tw-cursor-pointer tw-items-start tw-gap-3 tw-rounded-2xl tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-3 tw-shadow-card;
+    @apply tw-relative tw-grid tw-cursor-pointer tw-items-start tw-gap-3.5 tw-overflow-hidden tw-rounded-card tw-border tw-border-solid tw-border-line tw-bg-surface tw-p-3 tw-shadow-card sm:tw-p-3.5;
     grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .gm-shop-card::before {
+    content: "";
+    @apply tw-absolute tw-inset-y-0 tw-left-0 tw-w-1 tw-opacity-0;
+    background: var(--gm-grad-primary);
+    transition: opacity 0.2s ease;
   }
 
   .gm-shop-card:hover {
     @apply tw-border-primary;
+    box-shadow: var(--gm-shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .gm-shop-card:hover::before {
+    @apply tw-opacity-100;
   }
 
   .gm-shop-photo {
@@ -615,8 +717,14 @@
   }
 
   .gm-shop-photo img {
-    @apply tw-block tw-w-full tw-rounded-xl tw-bg-accent tw-object-cover;
+    @apply tw-block tw-w-full tw-rounded-2xl tw-bg-accent tw-object-cover;
     aspect-ratio: 1;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 4%);
+    transition: transform 0.3s ease;
+  }
+
+  .gm-shop-card:hover .gm-shop-photo-card img {
+    transform: scale(1.03);
   }
 
   .gm-shop-photo figcaption {
@@ -639,7 +747,7 @@
   }
 
   .gm-shop-name {
-    @apply tw-m-0 tw-text-base tw-font-extrabold tw-leading-snug;
+    @apply tw-m-0 tw-text-base tw-font-extrabold tw-leading-snug sm:tw-text-[1.05rem];
   }
 
   .gm-shop-name-btn {
@@ -686,7 +794,11 @@
   }
 
   .gm-shop-distance {
-    @apply tw-text-sm tw-font-bold tw-text-primary;
+    @apply tw-w-fit tw-items-center tw-rounded-full tw-bg-accent tw-px-2.5 tw-py-0.5 tw-text-sm tw-font-bold tw-text-accent-ink;
+  }
+
+  .gm-shop-distance .gm-shop-line-icon {
+    @apply tw-mt-0 tw-text-primary;
   }
 
   .gm-heart-btn {
@@ -707,7 +819,9 @@
   }
 
   .gm-state-icon {
-    @apply tw-grid tw-h-14 tw-w-14 tw-place-items-center tw-rounded-full tw-bg-accent tw-text-2xl tw-text-primary;
+    @apply tw-grid tw-h-16 tw-w-16 tw-place-items-center tw-rounded-full tw-text-2xl tw-text-primary;
+    background: var(--gm-grad-soft);
+    box-shadow: 0 0 0 8px var(--gm-surface-2);
   }
 
   .gm-state-error .gm-state-icon {
@@ -872,6 +986,15 @@
   .gm-info-value {
     @apply tw-block tw-text-sm;
     white-space: pre-line;
+  }
+
+  /* 使えるカードの種類（店舗詳細） */
+  .gm-card-brands {
+    @apply tw-mx-0 tw-mb-0 tw-mt-1 tw-flex tw-list-none tw-flex-wrap tw-gap-1.5 tw-p-0;
+  }
+
+  .gm-card-brands .gm-chip {
+    @apply tw-border-line tw-bg-surface-2 tw-font-semibold;
   }
 
   .gm-feature-grid {
@@ -1101,11 +1224,13 @@
   }
 
   .gm-step-art-wide {
-    @apply tw-h-auto tw-w-56 tw-rounded-3xl tw-p-4;
+    @apply tw-block tw-h-auto tw-w-full tw-max-w-xs tw-overflow-hidden tw-rounded-3xl tw-p-0;
+    box-shadow: var(--gm-shadow-lg);
   }
 
-  .gm-step-art-wide svg {
-    @apply tw-block tw-h-auto tw-w-full;
+  .gm-step-art-wide img {
+    @apply tw-block tw-h-auto tw-w-full tw-object-cover;
+    aspect-ratio: 4 / 3;
   }
 
   .gm-consent-points {
@@ -1262,21 +1387,33 @@
   }
 
   .gm-bottom-nav {
-    @apply tw-fixed tw-inset-x-0 tw-bottom-0 tw-grid tw-grid-cols-5 tw-border-0 tw-border-t tw-border-solid tw-border-line tw-bg-surface tw-px-1 tw-pt-1;
-    padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+    @apply tw-fixed tw-inset-x-2 tw-grid tw-grid-cols-5 tw-rounded-3xl tw-border tw-border-solid tw-border-line tw-p-1;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
     z-index: 1030;
+    background: var(--gm-glass);
+    box-shadow: var(--gm-shadow-lg);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    backdrop-filter: saturate(1.6) blur(16px);
   }
 
   .gm-bottom-nav a {
-    @apply tw-flex tw-min-h-[56px] tw-min-w-0 tw-flex-col tw-items-center tw-justify-center tw-gap-0.5 tw-rounded-xl tw-text-[0.7rem] tw-font-semibold tw-text-muted tw-no-underline;
+    @apply tw-flex tw-min-h-[56px] tw-min-w-0 tw-flex-col tw-items-center tw-justify-center tw-gap-0.5 tw-rounded-2xl tw-text-[0.7rem] tw-font-semibold tw-text-muted tw-no-underline;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   .gm-bottom-nav a > i {
-    @apply tw-text-xl;
+    @apply tw-grid tw-h-7 tw-w-12 tw-place-items-center tw-rounded-full tw-text-lg;
+    transition: background-color 0.2s ease;
   }
 
   .gm-bottom-nav a[aria-current="page"] {
-    @apply tw-font-extrabold tw-text-primary;
+    @apply tw-font-extrabold tw-text-accent-ink;
+  }
+
+  .gm-bottom-nav a[aria-current="page"] > i {
+    @apply tw-text-primary;
+    background: var(--gm-grad-soft);
+    box-shadow: inset 0 0 0 1px var(--gm-border);
   }
 
   .gm-bottom-nav a[aria-current="page"] > i::before {

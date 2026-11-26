@@ -2222,17 +2222,51 @@
        13. 店舗詳細モーダル（M項目）・共有（SH-01／SH-02）
     ==================================== */
 
+  // value は文字列または要素（リンク・チップなど）
   function infoItem(iconName, label, value) {
+    const body =
+      value instanceof Node
+        ? el("div", { className: "gm-info-value" }, value)
+        : el("span", { className: "gm-info-value", text: value || "情報なし" });
+
     return el(
       "li",
       {},
       icon(iconName, "solid", "gm-info-icon"),
-      el(
-        "div",
-        { className: "tw-min-w-0" },
-        el("span", { className: "gm-info-label", text: label }),
-        el("span", { className: "gm-info-value", text: value || "情報なし" }),
-      ),
+      el("div", { className: "tw-min-w-0" }, el("span", { className: "gm-info-label", text: label }), body),
+    );
+  }
+
+  // 電話番号はホットペッパーAPIの返却項目にないため、店舗ページへ案内する
+  function phoneInfo(shop) {
+    const url = shopUrl(shop);
+
+    if (!url) return "情報なし";
+
+    return el(
+      "a",
+      {
+        className: "gm-text-link tw-gap-1.5",
+        attrs: { href: url, target: "_blank", rel: "noopener noreferrer" },
+      },
+      "ホットペッパーの店舗ページで確認",
+      icon("arrow-up-right-from-square", "solid", "tw-text-xs"),
+      UI.srOnly("（新しいタブで開く）"),
+    );
+  }
+
+  // 利用できるカードの種類（type=credit_card）。種類がなければ「利用可／不可」を表示
+  function cardInfo(shop) {
+    const brands = Array.isArray(shop.creditCards)
+      ? shop.creditCards.map((name) => String(name ?? "").trim()).filter(Boolean)
+      : [];
+
+    if (!brands.length) return shop.card || "情報なし";
+
+    return el(
+      "ul",
+      { className: "gm-card-brands", attrs: { "aria-label": "利用できるカード" } },
+      ...brands.map((name) => el("li", { className: "gm-chip", text: name })),
     );
   }
 
@@ -2275,6 +2309,8 @@
       infoItem("clock", "営業時間", shop.open),
       infoItem("calendar-xmark", "定休日", shop.close),
       infoItem("yen-sign", "平均ディナー予算（ランチ予算ではありません）", shop.budget),
+      infoItem("phone", "電話番号", phoneInfo(shop)),
+      infoItem("credit-card", "使えるカード", cardInfo(shop)),
     );
 
     // 「あり」と判定できる設備のみアイコン＋テキストで表示（色だけに依存しない）
@@ -2299,16 +2335,27 @@
       ["最寄り駅", shop.stationName],
       ["アクセス", shop.access],
       ["ランチ", shop.lunch],
+      ["23時以降の営業", shop.midnight],
       ["カード", shop.card],
+      ["予算メモ", shop.budgetMemo],
       ["駐車場", shop.parking],
       ["禁煙・喫煙", shop.nonSmoking],
       ["バリアフリー", shop.barrierFree],
       ["総席数", shop.capacity],
+      ["宴会最大人数", shop.partyCapacity],
       ["個室", shop.privateRoom],
+      ["座敷", shop.tatami],
+      ["掘りごたつ", shop.horigotatsu],
+      ["貸切", shop.charter],
       ["Wi-Fi", shop.wifi],
       ["お子様連れ", shop.child],
       ["飲み放題（掲載情報）", shop.freeDrink],
       ["食べ放題", shop.freeFood],
+      ["コース", shop.course],
+      ["英語メニュー", shop.english],
+      ["ペット同伴", shop.pet],
+      ["その他設備", shop.otherMemo],
+      ["備考", shop.shopDetailMemo],
     ];
 
     $("shop-details").replaceChildren(
@@ -2361,6 +2408,17 @@
     if (url) {
       actions.append(
         externalLink("ホットペッパーで開く", url, "arrow-up-right-from-square", "gm-btn gm-btn-outline-primary"),
+      );
+    }
+
+    const couponUrl = safeUrl(shop.couponUrl, C.SHOP_URL_DOMAINS);
+
+    if (couponUrl) {
+      actions.append(externalLink("クーポン", couponUrl, "ticket", "gm-btn gm-btn-outline-primary"));
+    }
+
+    if (url) {
+      actions.append(
         el(
           "button",
           {

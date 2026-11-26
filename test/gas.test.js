@@ -37,6 +37,24 @@ function hotpepperPage(start, total, count) {
       access: "徒歩1分",
       lunch: "あり",
       card: "利用可",
+      credit_card: [
+        { code: "c01", name: "VISA" },
+        { code: "c02", name: "JCB" },
+        { code: "c01", name: "VISA" },
+        { code: "c03", name: "" },
+      ],
+      budget_memo: "お通し代300円",
+      party_capacity: 30,
+      course: "あり",
+      charter: "貸切可",
+      tatami: "なし",
+      horigotatsu: "なし",
+      midnight: "営業している",
+      english: "なし",
+      pet: "不可",
+      other_memo: "プロジェクターあり",
+      shop_detail_memo: "メモ",
+      coupon_urls: { pc: "https://www.hotpepper.jp/strJ000000001/map/", sp: "https://evil.example.com/" },
       parking: "なし",
       non_smoking: "全面禁煙",
       barrier_free: "なし",
@@ -113,12 +131,24 @@ test("検索：range=5・count=100・datum=world、項目は許可リストで�
   assert.equal(shop.nonSmoking, "全面禁煙");
   assert.equal(Object.hasOwn(shop, "secret_field"), false);
   assert.deepEqual(shop.photos, ["https://imgfp.hotp.jp/a.jpg", "https://imgfp.hotp.jp/b.jpg"]);
+  // 利用できるカードの種類（重複・空は除外）
+  assert.deepEqual(shop.creditCards, ["VISA", "JCB"]);
+  assert.equal(shop.card, "利用可");
+  assert.equal(shop.budgetMemo, "お通し代300円");
+  assert.equal(shop.partyCapacity, "30");
+  assert.equal(shop.charter, "貸切可");
+  assert.equal(shop.midnight, "営業している");
+  // クーポンURLはホットペッパーのドメインのみ（sp が不正なら pc を採用）
+  assert.equal(shop.couponUrl, "https://www.hotpepper.jp/strJ000000001/map/");
+  // 電話番号はAPIの返却項目にないため持たない
+  assert.equal(Object.hasOwn(shop, "tel"), false);
 
   assert.match(fetched[0], /range=5/);
   assert.match(fetched[0], /count=100/);
   assert.match(fetched[0], /datum=world/);
   assert.match(fetched[0], /format=json/);
   assert.doesNotMatch(fetched[0], /type=lite/);
+  assert.match(fetched[0], /type=credit_card/);
 
   // APIキーは応答に含まれない
   assert.doesNotMatch(JSON.stringify(result), /test-hotpepper-key/);
